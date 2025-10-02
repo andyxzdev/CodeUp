@@ -20,5 +20,6 @@ const styles = StyleSheet.create({
 
   Texto: {
     fontSize: 70,
+    fontWeight: "700",
   },
 });

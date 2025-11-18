@@ -7,36 +7,29 @@ export const authService = {
     try {
       console.log("🔐 Tentando login real...", email);
 
-      // Chama o SEU AuthController do Spring
       const response = await api.post("/auth/login", {
         email,
-        senha, // Note: seu backend espera "senha", não "password"
+        senha,
       });
 
       console.log("📦 Resposta completa do login:", response);
 
-      // Sua resposta do Spring tem esta estrutura:
-      // {
-      //   "sucesso": true,
-      //   "mensagem": "Login bem-sucedido",
-      //   "dados": {
-      //     "token": "jwt_token_aqui",
-      //     "usuario": {
-      //       "id": 1,
-      //       "nome": "Nome do Usuário",
-      //       "email": "email@exemplo.com"
-      //     }
-      //   }
-      // }
+      // 🔥 CORREÇÃO: Verificar se token existe
+      const token = response.dados?.token;
+      const usuario = response.dados?.usuario;
 
-      if (response.sucesso && response.dados.token) {
-        const token = response.dados.token;
-        const usuario = response.dados.usuario;
+      if (response.sucesso && usuario) {
+        // Se token for null, ainda permite login (para teste)
+        if (token) {
+          await AsyncStorage.setItem("userToken", token);
+          setToken(token);
+        } else {
+          console.warn(
+            "⚠️ Token não recebido do backend, continuando sem token"
+          );
+        }
 
-        // Salva token e usuário no AsyncStorage
-        await AsyncStorage.setItem("userToken", token);
         await AsyncStorage.setItem("userData", JSON.stringify(usuario));
-        setToken(token);
 
         console.log("✅ Login realizado com sucesso:", usuario.nome);
         return {

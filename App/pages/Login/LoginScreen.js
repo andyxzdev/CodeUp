@@ -1,4 +1,4 @@
-// App/pages/Login/LoginScreen.js - VERSÃO SIMPLIFICADA
+// App/pages/Login/LoginScreen.js - ATUALIZADO COM NAVEGAÇÃO
 import React, { useState } from "react";
 import {
   View,
@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { authService } from "../../api/authService.js";
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
+  // 🔥 ADICIONAR navigation como prop
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -29,6 +30,10 @@ export default function LoginScreen() {
 
       Alert.alert("Sucesso", `Bem-vindo, ${resultado.usuario.nome}!`);
       console.log("✅ Login realizado:", resultado.usuario.nome);
+
+      // 🔥 ADICIONAR NAVEGAÇÃO PARA HOME APÓS LOGIN
+      console.log("🎯 Navegando para Home...");
+      navigation.navigate("Home");
     } catch (error) {
       Alert.alert("Erro no Login", error.message);
       console.error("❌ Erro no login:", error);

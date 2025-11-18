@@ -2,9 +2,10 @@
   "name": "codeup",
   "version": "1.0.0",
   "main": "index.js",
-
-   "expo": {
-    "plugins": ["expo-router"]
+  "expo": {
+    "plugins": [
+      "expo-router"
+    ]
   },
   "scripts": {
     "start": "expo start",
@@ -13,10 +14,12 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "expo": "54.0.12",
     "expo-router": "~6.0.10",
     "expo-status-bar": "~3.0.8",
-    "react": "19.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "react-native": "0.81.4",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0"

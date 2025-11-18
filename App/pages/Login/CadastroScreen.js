@@ -1,4 +1,4 @@
-// App/pages/Login/LoginScreen.js - VERSÃO SIMPLIFICADA
+// App/pages/Login/CadastroScreen.js
 import React, { useState } from "react";
 import {
   View,
@@ -10,28 +10,25 @@ import {
 } from "react-native";
 import { authService } from "../../api/authService.js";
 
-export default function LoginScreen() {
+export default function CadastroScreen({ navigation }) {
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !senha) {
-      Alert.alert("Erro", "Preencha email e senha");
+  const handleCadastro = async () => {
+    if (!nome || !email || !senha) {
+      Alert.alert("Erro", "Preencha todos os campos");
       return;
     }
 
     setCarregando(true);
     try {
-      console.log("🔐 Tentando login...", email);
-
-      const resultado = await authService.login(email, senha);
-
-      Alert.alert("Sucesso", `Bem-vindo, ${resultado.usuario.nome}!`);
-      console.log("✅ Login realizado:", resultado.usuario.nome);
+      const resultado = await authService.cadastrar(nome, email, senha);
+      Alert.alert("Sucesso", `Conta criada para ${resultado.usuario.nome}!`);
+      // Navega para a tela principal ou volta para login
     } catch (error) {
-      Alert.alert("Erro no Login", error.message);
-      console.error("❌ Erro no login:", error);
+      Alert.alert("Erro no Cadastro", error.message);
     } finally {
       setCarregando(false);
     }
@@ -39,8 +36,14 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>CodeUp</Text>
-      <Text style={styles.subtitle}>Faça login na sua conta</Text>
+      <Text style={styles.title}>Criar Conta</Text>
+
+      <TextInput
+        placeholder="Nome completo"
+        value={nome}
+        onChangeText={setNome}
+        style={styles.input}
+      />
 
       <TextInput
         placeholder="Email"
@@ -49,7 +52,6 @@ export default function LoginScreen() {
         style={styles.input}
         autoCapitalize="none"
         keyboardType="email-address"
-        placeholderTextColor="#999"
       />
 
       <TextInput
@@ -58,16 +60,15 @@ export default function LoginScreen() {
         onChangeText={setSenha}
         secureTextEntry
         style={styles.input}
-        placeholderTextColor="#999"
       />
 
       <TouchableOpacity
-        onPress={handleLogin}
+        onPress={handleCadastro}
         disabled={carregando}
-        style={[styles.loginButton, carregando && styles.loginButtonDisabled]}
+        style={[styles.button, carregando && styles.buttonDisabled]}
       >
-        <Text style={styles.loginButtonText}>
-          {carregando ? "Entrando..." : "Entrar"}
+        <Text style={styles.buttonText}>
+          {carregando ? "Criando..." : "Criar Conta"}
         </Text>
       </TouchableOpacity>
     </View>
@@ -82,17 +83,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
   title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 10,
-    color: "#007AFF",
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: "center",
     marginBottom: 40,
-    color: "#666",
   },
   input: {
     backgroundColor: "white",
@@ -101,21 +95,19 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     borderRadius: 10,
-    fontSize: 16,
   },
-  loginButton: {
+  button: {
     backgroundColor: "#007AFF",
-    padding: 18,
+    padding: 15,
     borderRadius: 10,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 20,
   },
-  loginButtonDisabled: {
+  buttonDisabled: {
     backgroundColor: "#ccc",
   },
-  loginButtonText: {
+  buttonText: {
     color: "white",
     fontWeight: "bold",
-    fontSize: 16,
   },
 });

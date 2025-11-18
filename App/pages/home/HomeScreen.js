@@ -1,3 +1,5 @@
+// App/pages/Home/HomeScreen.js
+import React from "react";
 import {
   View,
   Text,
@@ -5,12 +7,22 @@ import {
   Image,
   FlatList,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useAuth } from "../../hooks/useAuth";
 
-export default function Home() {
-  const router = useRouter();
+export default function HomeScreen({ navigation }) {
+  const { usuario, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigation.navigate("Login");
+    } catch (error) {
+      Alert.alert("Erro", "Falha ao fazer logout");
+    }
+  };
 
   // Dados fake (substituir depois por backend)
   const stories = [
@@ -30,17 +42,6 @@ export default function Home() {
       comments: 99,
       favorites: 99,
     },
-    {
-      id: "2",
-      user: "user.456",
-      avatar: require("../../../assets/user1.jpg"),
-      description: "Meu setup gamer 🔥",
-      image: require("../../../assets/user1.jpg"),
-      likes: 45,
-      comments: 12,
-      favorites: 8,
-    },
-
     {
       id: "2",
       user: "user.456",
@@ -96,27 +97,34 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
+      {/* Header Personalizado */}
       <View style={styles.topo}>
         <Image
           style={styles.logoTopo}
           source={require("../../../assets/logo/CODE-UP2.png")}
         />
 
-        <TouchableOpacity
-          onPress={() => router.push("/notifications")}
-          style={styles.botaoTopo}
-        >
-          <Ionicons
-            name="notifications"
-            size={35}
-            color="#0068F5"
-            marginTop={65}
-          ></Ionicons>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Notifications")}
+            style={styles.botaoTopo}
+          >
+            <Ionicons name="notifications" size={35} color="#0068F5" />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+            <Ionicons name="log-out-outline" size={25} color="#FF3B30" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Saudação do usuário */}
+      <View style={styles.userWelcome}>
+        <Text style={styles.welcomeText}>Olá, {usuario?.nome}!</Text>
+        <Text style={styles.welcomeSubtext}>Bem-vindo de volta 👋</Text>
       </View>
 
       {/* Stories */}
-
       <FlatList
         data={stories}
         horizontal
@@ -144,24 +152,57 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 10 },
-
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    padding: 10,
+    paddingTop: 50, // Para status bar
+  },
   topo: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingLeft: 10,
-    paddingRight: 10,
+    alignItems: "center",
+    paddingHorizontal: 10,
   },
-
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   logoTopo: {
     width: 70,
     height: 70,
-    marginTop: 50,
   },
-
+  botaoTopo: {
+    marginRight: 15,
+  },
+  logoutBtn: {
+    padding: 5,
+  },
+  userWelcome: {
+    paddingHorizontal: 10,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  welcomeText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  welcomeSubtext: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 5,
+  },
   /** Stories */
-  storiesList: { paddingVertical: 10, paddingLeft: 0, marginTop: "10%" },
-  story: { alignItems: "center", marginRight: 15 },
+  storiesList: {
+    paddingVertical: 10,
+    paddingLeft: 0,
+    marginTop: 10,
+  },
+  story: {
+    alignItems: "center",
+    marginRight: 15,
+  },
   storyImage: {
     width: 60,
     height: 60,
@@ -169,18 +210,34 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#3b33ff",
   },
-  storyName: { fontSize: 12, marginTop: 4 },
-
+  storyName: {
+    fontSize: 12,
+    marginTop: 4,
+  },
   /** Posts */
-  postContainer: { marginBottom: 20, backgroundColor: "#fff", marginTop: 20 },
+  postContainer: {
+    marginBottom: 20,
+    backgroundColor: "#fff",
+    marginTop: 20,
+  },
   postHeader: {
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
   },
-  avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
-  username: { fontWeight: "bold" },
-  description: { fontSize: 12, color: "#555" },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  username: {
+    fontWeight: "bold",
+  },
+  description: {
+    fontSize: 12,
+    color: "#555",
+  },
   postImage: {
     width: "100%",
     height: 250,
@@ -192,5 +249,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
   },
-  actionBtn: { flexDirection: "row", alignItems: "center", marginRight: 20 },
+  actionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 20,
+  },
 });

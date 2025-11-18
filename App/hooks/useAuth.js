@@ -1,6 +1,6 @@
 // App/hooks/useAuth.js
 import { useState, useEffect } from "react";
-import { authService } from "../api/authService.js";
+import { authService } from "../api/authService.js"; // Verifique este caminho
 
 export const useAuth = () => {
   const [usuario, setUsuario] = useState(null);
@@ -31,13 +31,23 @@ export const useAuth = () => {
       setUsuario(resultado.usuario);
       return resultado;
     } catch (error) {
+      console.error("Erro no login:", error);
       throw error;
     }
+  };
+
+  const logout = async () => {
+    await authService.logout();
+    setUsuario(null);
   };
 
   return {
     usuario,
     carregando,
     login,
+    logout,
   };
 };
+
+// ⚠️ VERIFIQUE: Não tem "export default" duplicado?
+export default useAuth;

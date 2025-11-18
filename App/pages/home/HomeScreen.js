@@ -1,4 +1,4 @@
-// App/pages/Home/HomeScreen.js
+// App/pages/Home/HomeScreen.js - COM FOOTER
 import React from "react";
 import {
   View,
@@ -147,6 +147,49 @@ export default function HomeScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         style={styles.feed}
       />
+
+      {/* 🔥 FOOTER NAVIGATION */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => navigation.navigate("Home")}
+        >
+          <Ionicons name="home" size={24} color="#007AFF" />
+          <Text style={styles.footerText}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => navigation.navigate("Search")}
+        >
+          <Ionicons name="search" size={24} color="#666" />
+          <Text style={styles.footerText}>Pesquisa</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => navigation.navigate("CreatePost")}
+        >
+          <Ionicons name="add-circle" size={24} color="#666" />
+          <Text style={styles.footerText}>Criar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => navigation.navigate("Messages")}
+        >
+          <Ionicons name="chatbubble" size={24} color="#666" />
+          <Text style={styles.footerText}>Mensagens</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => navigation.navigate("Profile")}
+        >
+          <Ionicons name="person" size={24} color="#666" />
+          <Text style={styles.footerText}>Perfil</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -156,7 +199,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     padding: 10,
-    paddingTop: 50, // Para status bar
+    paddingTop: 50,
   },
   topo: {
     flexDirection: "row",
@@ -253,5 +296,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginRight: 20,
+  },
+  /** 🔥 FOOTER STYLES */
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  footerButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 5,
+  },
+  footerText: {
+    fontSize: 10,
+    marginTop: 2,
+    color: "#666",
   },
 });

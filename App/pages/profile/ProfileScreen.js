@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function Profile() {
+export default function ProfileScreen() {
   const userData = {
     username: "caio.developer",
     name: "Caio Developer",

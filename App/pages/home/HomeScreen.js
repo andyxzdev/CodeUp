@@ -1,5 +1,4 @@
-// App/pages/Home/HomeScreen.js - COM FOOTER
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,12 +7,17 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../hooks/useAuth";
+import { publicacaoService } from "../../api/publicacaoService";
 
 export default function HomeScreen({ navigation }) {
   const { usuario, logout } = useAuth();
+  const [publicacoes, setPublicacoes] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -24,76 +28,150 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // Dados fake (substituir depois por backend)
-  const stories = [
-    { id: "2", name: "user1", image: require("../../../assets/user1.jpg") },
-    { id: "3", name: "user2", image: require("../../../assets/user1.jpg") },
-    { id: "4", name: "user3", image: require("../../../assets/user1.jpg") },
-  ];
+  // Buscar feed real do backend
+  const carregarFeed = async () => {
+    try {
+      setCarregando(true);
+      console.log("🔄 Carregando feed real...");
 
-  const posts = [
-    {
-      id: "1",
-      user: "user.123",
-      avatar: require("../../../assets/user1.jpg"),
-      description: "lorem ipsum12345678910",
-      image: require("../../../assets/user1.jpg"),
-      likes: 99,
-      comments: 99,
-      favorites: 99,
-    },
-    {
-      id: "2",
-      user: "user.456",
-      avatar: require("../../../assets/user1.jpg"),
-      description: "Meu setup gamer 🔥",
-      image: require("../../../assets/user1.jpg"),
-      likes: 45,
-      comments: 12,
-      favorites: 8,
-    },
-  ];
+      const response = await publicacaoService.getFeed(0, 20);
+      console.log("📦 Resposta completa do feed:", response);
 
-  // Renderiza cada post
-  const renderPost = ({ item }) => (
-    <View style={styles.postContainer}>
-      {/* Header do Post */}
-      <View style={styles.postHeader}>
-        <Image source={item.avatar} style={styles.avatar} />
-        <View>
-          <Text style={styles.username}>@{item.user}</Text>
-          <Text style={styles.description}>{item.description}</Text>
+      if (response.sucesso && response.dados && response.dados.content) {
+        // 🔥 FILTRAR publicações com dados válidos
+        const publicacoesValidas = response.dados.content.filter(
+          (pub) => pub.conteudo !== null && pub.id !== null
+        );
+
+        console.log(
+          `✅ ${publicacoesValidas.length} publicações válidas carregadas`
+        );
+        setPublicacoes(publicacoesValidas);
+      } else {
+        console.warn("⚠️ Nenhuma publicação válida encontrada");
+        setPublicacoes([]);
+      }
+    } catch (error) {
+      console.error("❌ Erro ao carregar feed:", error);
+      Alert.alert("Erro", "Falha ao carregar feed");
+    } finally {
+      setCarregando(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Curtir publicação
+  const handleCurtir = async (publicacaoId) => {
+    try {
+      console.log(`❤️ Curtindo publicação ${publicacaoId}`);
+
+      const response = await publicacaoService.curtirPublicacao(publicacaoId);
+
+      if (response.sucesso) {
+        // Atualizar lista localmente
+        setPublicacoes((prevPublicacoes) =>
+          prevPublicacoes.map((pub) =>
+            pub.id === publicacaoId
+              ? { ...pub, curtidasCount: pub.curtidasCount + 1 }
+              : pub
+          )
+        );
+      }
+    } catch (error) {
+      console.error("❌ Erro ao curtir:", error);
+      Alert.alert("Erro", "Falha ao curtir publicação");
+    }
+  };
+
+  // Salvar publicação
+  const handleSalvar = async (publicacaoId) => {
+    try {
+      console.log(`⭐ Salvando publicação ${publicacaoId}`);
+
+      const response = await publicacaoService.salvarPublicacao(publicacaoId);
+
+      if (response.sucesso) {
+        Alert.alert("Sucesso", "Publicação salva!");
+      }
+    } catch (error) {
+      console.error("❌ Erro ao salvar:", error);
+      Alert.alert("Erro", "Falha ao salvar publicação");
+    }
+  };
+
+  // Pull to refresh
+  const onRefresh = () => {
+    setRefreshing(true);
+    carregarFeed();
+  };
+
+  useEffect(() => {
+    carregarFeed();
+  }, []);
+
+  // Render modificado para lidar com dados null
+  const renderPublicacao = ({ item }) => {
+    if (!item.conteudo || !item.id) {
+      return null; // Não renderizar publicações inválidas
+    }
+
+    return (
+      <View style={styles.postContainer}>
+        {/* Header do Post */}
+        <View style={styles.postHeader}>
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarText}>
+              {item.authorName?.charAt(0) || "U"}
+            </Text>
+          </View>
+          <View style={styles.userInfo}>
+            <Text style={styles.username}>@{item.authorName || "usuário"}</Text>
+            <Text style={styles.timestamp}>
+              {item.createdAt
+                ? new Date(item.createdAt).toLocaleDateString("pt-BR")
+                : "Data desconhecida"}
+            </Text>
+          </View>
         </View>
-        <Ionicons
-          name="ellipsis-horizontal"
-          size={20}
-          color="#000"
-          style={{ marginLeft: "auto" }}
-        />
+
+        {/* Conteúdo do Post */}
+        <Text style={styles.conteudo}>{item.conteudo}</Text>
+
+        {/* Ações */}
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => handleCurtir(item.id)}
+          >
+            <Ionicons name="heart-outline" size={22} color="#000" />
+            <Text style={styles.actionText}>{item.curtidasCount || 0}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionBtn}>
+            <Ionicons name="chatbubble-outline" size={22} color="#000" />
+            <Text style={styles.actionText}>{item.comentariosCount || 0}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => handleSalvar(item.id)}
+          >
+            <Ionicons name="bookmark-outline" size={22} color="#000" />
+            <Text style={styles.actionText}>{item.salvosCount || 0}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+    );
+  };
 
-      {/* Imagem do Post */}
-      <Image source={item.image} style={styles.postImage} />
-
-      {/* Ações */}
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionBtn}>
-          <Ionicons name="heart" size={22} color="red" />
-          <Text>{item.likes}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionBtn}>
-          <Ionicons name="chatbubble-outline" size={22} color="#000" />
-          <Text>{item.comments}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionBtn}>
-          <Ionicons name="star" size={22} color="#000" />
-          <Text>{item.favorites}</Text>
-        </TouchableOpacity>
+  if (carregando) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Carregando publicações...</Text>
       </View>
-    </View>
-  );
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -112,43 +190,32 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="notifications" size={35} color="#0068F5" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+          {/*<TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
             <Ionicons name="log-out-outline" size={25} color="#FF3B30" />
-          </TouchableOpacity>
+          </TouchableOpacity>*/}
         </View>
       </View>
 
-      {/* Saudação do usuário */}
-      <View style={styles.userWelcome}>
-        <Text style={styles.welcomeText}>Olá, {usuario?.nome}!</Text>
-        <Text style={styles.welcomeSubtext}>Bem-vindo de volta 👋</Text>
-      </View>
-
-      {/* Stories */}
+      {/* Feed REAL */}
       <FlatList
-        data={stories}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.storiesList}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.story}>
-            <Image source={item.image} style={styles.storyImage} />
-            <Text style={styles.storyName}>{item.name}</Text>
-          </View>
-        )}
-      />
-
-      {/* Feed */}
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={renderPost}
+        data={publicacoes}
+        keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+        renderItem={renderPublicacao}
         showsVerticalScrollIndicator={false}
         style={styles.feed}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Nenhuma publicação encontrada</Text>
+            <Text style={styles.emptySubtext}>
+              Seja o primeiro a compartilhar algo!
+            </Text>
+          </View>
+        }
       />
 
-      {/* 🔥 FOOTER NAVIGATION */}
+      {/* Footer Navigation */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.footerButton}
@@ -206,6 +273,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 10,
+    marginBottom: 90,
+    marginTop: -20,
   },
   headerRight: {
     flexDirection: "row",
@@ -262,40 +331,97 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: "#fff",
     marginTop: 20,
+    borderRadius: 10,
+    padding: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   postHeader: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
+    marginBottom: -210,
+    backgroundColor: "#999",
   },
-  avatar: {
+  avatarPlaceholder: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: "#007AFF",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 10,
+  },
+  avatarText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  userInfo: {
+    flex: 1,
   },
   username: {
     fontWeight: "bold",
+    fontSize: 16,
   },
-  description: {
+  timestamp: {
     fontSize: 12,
-    color: "#555",
+    color: "#999",
+    marginTop: 2,
   },
-  postImage: {
-    width: "100%",
-    height: 250,
-    resizeMode: "cover",
-    borderRadius: 10,
+  conteudo: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: "#333",
+    marginBottom: 10,
   },
   actions: {
     flexDirection: "row",
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
   },
   actionBtn: {
     flexDirection: "row",
     alignItems: "center",
     marginRight: 20,
+  },
+  actionText: {
+    marginLeft: 5,
+    fontSize: 14,
+    color: "#666",
+  },
+  /** Loading */
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#666",
+  },
+  /** Empty State */
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#666",
+    textAlign: "center",
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#999",
+    textAlign: "center",
+    marginTop: 8,
   },
   /** 🔥 FOOTER STYLES */
   footer: {

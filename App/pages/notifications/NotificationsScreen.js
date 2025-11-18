@@ -1,3 +1,4 @@
+// App/pages/Notifications/NotificationsScreen.js - CORRIGIDO
 import {
   StyleSheet,
   Text,
@@ -5,7 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons"; // Ícones para a tela de notificações
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 
 const notificaçõesItens = [
@@ -65,22 +66,12 @@ const NotificationsItem = ({ item, onMarkAsRead }) => {
 };
 
 const renderNotificationsItem = ({ item }) => (
-  <NotificationsItem item={item} onMarkAsRead={() => {}} /> // {markAsRead}
+  <NotificationsItem item={item} onMarkAsRead={() => {}} />
 );
 
-export default function notifications() {
-  const [notifications, setNotifications] = useState(notificaçõesItens); // Estado para gerenciar o status de leitura das notificações
-
-  //const markAsRead = (id) => {
-
-  // const updateNotifications = notifications.map((item) => {
-  //   if (item.id === id) {
-  //        return {...item, isRead: true};
-  //   }
-  //      return item;
-  // });
-  // setNotifications(updateNotifications);
-  //}
+// 🔥 CORREÇÃO AQUI: Mude para NotificationsScreen (com N maiúsculo)
+export default function NotificationsScreen() {
+  const [notifications, setNotifications] = useState(notificaçõesItens);
 
   return (
     <View style={styles.container}>
@@ -115,11 +106,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   itemUnreadBackground: {
-    backgroundColor: "#E6F0FF", // Fundo levemente azul para não lidas
+    backgroundColor: "#E6F0FF",
     borderLeftWidth: 5,
     borderLeftColor: "#1E90FF",
   },
-  notificationContent: {
+  notificationsContent: {
+    // 🔥 CORREÇÃO: estava notificationContent
     flex: 1,
     flexDirection: "row",
     alignItems: "center",

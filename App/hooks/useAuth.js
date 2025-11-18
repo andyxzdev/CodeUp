@@ -1,6 +1,5 @@
-// App/hooks/useAuth.js
 import { useState, useEffect } from "react";
-import { authService } from "../api/authService.js"; // Verifique este caminho
+import { authService } from "../api/authService.js";
 
 export const useAuth = () => {
   const [usuario, setUsuario] = useState(null);
@@ -12,31 +11,53 @@ export const useAuth = () => {
 
   const carregarUsuario = async () => {
     try {
+      console.log("🔄 useAuth - Iniciando carregamento do usuário...");
+
       const user = await authService.getUser();
       const token = await authService.getToken();
 
-      if (user && token) {
+      console.log("📦 useAuth - Usuário do AsyncStorage:", user);
+      console.log("🔑 useAuth - Token do AsyncStorage:", token);
+
+      if (user) {
+        console.log("✅ useAuth - Usuário encontrado:", user.nome);
         setUsuario(user);
+      } else {
+        console.log("❌ useAuth - NENHUM usuário encontrado no AsyncStorage");
+        setUsuario(null);
       }
     } catch (error) {
-      console.error("Erro ao carregar usuário:", error);
+      console.error("💥 useAuth - Erro ao carregar usuário:", error);
+      setUsuario(null);
     } finally {
+      console.log("🏁 useAuth - Carregamento finalizado");
       setCarregando(false);
     }
   };
 
   const login = async (email, senha) => {
     try {
+      console.log("🔐 useAuth - Iniciando login...");
       const resultado = await authService.login(email, senha);
-      setUsuario(resultado.usuario);
+
+      if (resultado.sucesso && resultado.usuario) {
+        console.log("✅ useAuth - Login bem-sucedido:", resultado.usuario.nome);
+        setUsuario(resultado.usuario);
+      } else {
+        console.log("❌ useAuth - Login falhou");
+        setUsuario(null);
+      }
+
       return resultado;
     } catch (error) {
-      console.error("Erro no login:", error);
+      console.error("💥 useAuth - Erro no login:", error);
+      setUsuario(null);
       throw error;
     }
   };
 
   const logout = async () => {
+    console.log("🚪 useAuth - Fazendo logout...");
     await authService.logout();
     setUsuario(null);
   };
@@ -49,5 +70,4 @@ export const useAuth = () => {
   };
 };
 
-// ⚠️ VERIFIQUE: Não tem "export default" duplicado?
 export default useAuth;

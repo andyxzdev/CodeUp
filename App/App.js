@@ -3,8 +3,11 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import LoginScreen from "./pages/Login/LoginScreen";
 import HomeScreen from "./pages/home/HomeScreen";
-import ProfileScreen from "./pages/profile/ProfileScreen"; // Sua tela de perfil
-import NotificationsScreen from "./pages/notifications/NotificationsScreen"; // Sua tela de notificações
+import ProfileScreen from "./pages/profile/ProfileScreen";
+import NotificationsScreen from "./pages/Notifications/NotificationsScreen";
+import ChatScreen from "./pages/Messages/ChatScreen";
+import ConversasScreen from "./pages/Messages/ConversasScreen";
+import NovaMensagemScreen from "./pages/Messages/NovaMensagemScreen";
 
 const Stack = createStackNavigator();
 
@@ -36,14 +39,13 @@ export default function App() {
         <Stack.Screen
           name="Profile"
           component={ProfileScreen}
-          options={{ title: "Meu Perfil" }}
+          options={{ title: "Perfil", headerShown: false }}
         />
         <Stack.Screen
           name="Notifications"
-          component={NotificationsScreen}
+          component={NotificationsScreen} // ← Agora vai funcionar!
           options={{ title: "Notificações" }}
         />
-        {/* 🔥 ADICIONE ESTAS TELAS TEMPORÁRIAS */}
         <Stack.Screen
           name="Search"
           component={HomeScreen} // Temporário - mesma tela
@@ -56,9 +58,15 @@ export default function App() {
         />
         <Stack.Screen
           name="Messages"
-          component={HomeScreen} // Temporário - mesma tela
+          component={ConversasScreen}
           options={{ title: "Mensagens" }}
         />
+        <Stack.Screen
+          name="NovaMensagem"
+          component={NovaMensagemScreen}
+          options={{ title: "Nova Mensagem" }}
+        />
+        <Stack.Screen name="Chat" component={ChatScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

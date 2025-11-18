@@ -103,7 +103,7 @@ export default function Home() {
         />
 
         <TouchableOpacity
-          onPress={() => router.push("/app")}
+          onPress={() => router.push("/notifications")}
           style={styles.botaoTopo}
         >
           <Ionicons

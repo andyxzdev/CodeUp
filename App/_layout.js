@@ -1,11 +1,9 @@
 import { Stack } from "expo-router";
 import { StyleSheet } from "react-native";
 
-export default function Layout() {
+export default function RootLayout() {
   return (
     <Stack>
-      <Stack.Screen name="home" options={{ headerShown: true }} />
-
       {/* Telas específicas com header */}
 
       <Stack.Screen
@@ -18,6 +16,15 @@ export default function Layout() {
           headerTitleStyle: styles.titulo, // Estilo do texto
           headerTintColor: "#FFF", // Cor do ícone/botão de voltar
         }}
+      />
+      <Stack.Screen
+        name="notifications"
+        options={{ headerTitle: "Notificação" }}
+      />
+      <Stack.Screen name="config" options={{ headerTitle: "Configuração" }} />
+      <Stack.Screen
+        name="config/Terms"
+        options={{ headerTitle: "Termos & Politicas" }}
       />
     </Stack>
   );

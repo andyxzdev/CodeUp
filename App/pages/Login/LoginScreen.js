@@ -75,6 +75,13 @@ export default function LoginScreen({ navigation }) {
           {carregando ? "Entrando..." : "Entrar"}
         </Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={{ marginTop: 20, alignItems: "center" }}
+        onPress={() => navigation.navigate("Cadastro")}
+      >
+        <Text style={{ color: "#007AFF" }}>Criar uma conta</Text>
+      </TouchableOpacity>
     </View>
   );
 }

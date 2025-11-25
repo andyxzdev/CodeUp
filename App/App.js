@@ -2,12 +2,16 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import LoginScreen from "./pages/Login/LoginScreen";
+import CadastroScreen from "./pages/Login/CadastroScreen";
 import HomeScreen from "./pages/home/HomeScreen";
-import ProfileScreen from "./pages/profile/ProfileScreen";
+import UserProfileScreen from "./pages/profile/UserProfileScreen";
+import MyProfileScreen from "./pages/profile/MyProfileScreen";
 import NotificationsScreen from "./pages/Notifications/NotificationsScreen";
 import ChatScreen from "./pages/Messages/ChatScreen";
 import ConversasScreen from "./pages/Messages/ConversasScreen";
 import NovaMensagemScreen from "./pages/Messages/NovaMensagemScreen";
+import CreatePostScreen from "./pages/post/CreatePostScreen";
+import SearchUserScreen from "./pages/search/SearchUserScreen";
 
 const Stack = createStackNavigator();
 
@@ -31,6 +35,13 @@ export default function App() {
           component={LoginScreen}
           options={{ headerShown: false }}
         />
+
+        <Stack.Screen
+          name="Cadastro"
+          component={CadastroScreen}
+          options={{ title: "Criar Conta" }}
+        />
+
         <Stack.Screen
           name="Home"
           component={HomeScreen}
@@ -38,8 +49,14 @@ export default function App() {
         />
         <Stack.Screen
           name="Profile"
-          component={ProfileScreen}
+          component={UserProfileScreen}
           options={{ title: "Perfil", headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="MyProfile"
+          component={MyProfileScreen}
+          options={{ title: "Meu Perfil", headerShown: false }}
         />
         <Stack.Screen
           name="Notifications"
@@ -48,13 +65,13 @@ export default function App() {
         />
         <Stack.Screen
           name="Search"
-          component={HomeScreen} // Temporário - mesma tela
-          options={{ title: "Pesquisar" }}
+          component={SearchUserScreen}
+          options={{ title: "Pesquisar Usuário" }}
         />
         <Stack.Screen
           name="CreatePost"
-          component={HomeScreen} // Temporário - mesma tela
-          options={{ title: "Criar Publicação" }}
+          component={CreatePostScreen}
+          options={{ title: "Nova Publicação" }}
         />
         <Stack.Screen
           name="Messages"

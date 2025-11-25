@@ -54,7 +54,6 @@ export default function ConversasScreen({ navigation }) {
       }
     } catch (error) {
       console.error("❌ Erro ao carregar conversas:", error);
-      Alert.alert("Erro", "Não foi possível carregar as conversas");
       setConversas([]);
     } finally {
       setCarregando(false);

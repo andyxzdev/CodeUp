@@ -1,4 +1,3 @@
-// App/pages/Login/CadastroScreen.js
 import React, { useState } from "react";
 import {
   View,
@@ -25,8 +24,13 @@ export default function CadastroScreen({ navigation }) {
     setCarregando(true);
     try {
       const resultado = await authService.cadastrar(nome, email, senha);
-      Alert.alert("Sucesso", `Conta criada para ${resultado.usuario.nome}!`);
-      // Navega para a tela principal ou volta para login
+
+      Alert.alert("Sucesso", `Conta criada para ${resultado.nome}!`, [
+        {
+          text: "Ir para Login",
+          onPress: () => navigation.navigate("Login"),
+        },
+      ]);
     } catch (error) {
       Alert.alert("Erro no Cadastro", error.message);
     } finally {
@@ -71,6 +75,13 @@ export default function CadastroScreen({ navigation }) {
           {carregando ? "Criando..." : "Criar Conta"}
         </Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.link}
+        onPress={() => navigation.navigate("Login")}
+      >
+        <Text style={{ color: "#007AFF" }}>Já tenho uma conta</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -103,11 +114,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 20,
   },
-  buttonDisabled: {
-    backgroundColor: "#ccc",
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
+  buttonDisabled: { backgroundColor: "#ccc" },
+  buttonText: { color: "white", fontWeight: "bold" },
+  link: { marginTop: 20, alignItems: "center" },
 });

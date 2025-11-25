@@ -41,7 +41,7 @@ export default function ChatScreen({ navigation, route }) {
       setMensagens(conversa || []);
     } catch (error) {
       console.error("❌ Erro ao carregar conversa:", error);
-      Alert.alert("Erro", "Não foi possível carregar a conversa");
+
       setMensagens([]);
     } finally {
       setCarregando(false);
@@ -69,7 +69,6 @@ export default function ChatScreen({ navigation, route }) {
       carregarConversa();
     } catch (error) {
       console.error("❌ Erro ao enviar mensagem:", error);
-      Alert.alert("Erro", "Não foi possível enviar a mensagem");
     } finally {
       setEnviando(false);
     }

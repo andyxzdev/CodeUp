@@ -10,39 +10,41 @@ export const setToken = (newToken) => {
   console.log("🔑 Token definido:", token ? "SIM" : "NÃO");
 };
 
+async function parseResponse(response) {
+  const text = await response.text();
+
+  try {
+    return JSON.parse(text); // tenta converter para JSON
+  } catch {
+    console.log("⚠ Resposta NÃO é JSON. Conteúdo cru:", text);
+    return {
+      sucesso: false,
+      mensagem: text,
+      dados: null,
+    };
+  }
+}
+
 export const api = {
   async get(endpoint) {
     try {
-      console.log(`🚀 INICIANDO GET: ${BASE_URL}${endpoint}`);
+      console.log(`🚀 GET: ${BASE_URL}${endpoint}`);
 
       const headers = {
         "Content-Type": "application/json",
       };
 
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-        console.log("🔐 Com token JWT");
-      }
-
-      console.log("📤 Headers:", headers);
+      if (token) headers["Authorization"] = `Bearer ${token}`;
 
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: "GET",
         headers,
       });
 
-      console.log("📥 Status:", response.status);
-      console.log("📥 OK?", response.ok);
+      const result = await parseResponse(response);
+      console.log("📥 Resultado GET:", result);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log("❌ Erro do servidor:", errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.text();
-      console.log("✅ GET bem-sucedido:", data);
-      return data;
+      return result;
     } catch (error) {
       console.error("💥 ERRO NO GET:", error);
       throw error;
@@ -51,19 +53,13 @@ export const api = {
 
   async post(endpoint, data) {
     try {
-      console.log(`🚀 INICIANDO POST: ${BASE_URL}${endpoint}`, data);
+      console.log(`🚀 POST: ${BASE_URL}${endpoint}`);
 
       const headers = {
         "Content-Type": "application/json",
       };
 
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-        console.log("🔐 Com token JWT");
-      }
-
-      console.log("📤 Headers:", headers);
-      console.log("📤 Body:", JSON.stringify(data));
+      if (token) headers["Authorization"] = `Bearer ${token}`;
 
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: "POST",
@@ -71,17 +67,9 @@ export const api = {
         body: JSON.stringify(data),
       });
 
-      console.log("📥 Status:", response.status);
-      console.log("📥 OK?", response.ok);
+      const result = await parseResponse(response);
+      console.log("📥 Resultado POST:", result);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log("❌ Erro do servidor:", errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log("✅ POST bem-sucedido:", result);
       return result;
     } catch (error) {
       console.error("💥 ERRO NO POST:", error);

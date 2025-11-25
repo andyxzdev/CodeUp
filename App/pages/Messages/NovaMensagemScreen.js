@@ -27,7 +27,6 @@ export default function NovaMensagemScreen({ navigation }) {
       console.log("👥 Carregando lista de usuários...");
 
       if (!usuarioLogado) {
-        Alert.alert("Erro", "Você precisa estar logado");
         setCarregando(false);
         return;
       }
@@ -51,7 +50,6 @@ export default function NovaMensagemScreen({ navigation }) {
       setUsuariosFiltrados(usuariosSemEu);
     } catch (error) {
       console.error("❌ Erro ao carregar usuários:", error);
-      Alert.alert("Erro", "Não foi possível carregar a lista de usuários");
       setUsuarios([]);
       setUsuariosFiltrados([]);
     } finally {

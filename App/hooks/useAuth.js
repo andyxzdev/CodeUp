@@ -1,29 +1,36 @@
 import { useState, useEffect } from "react";
 import { authService } from "../api/authService.js";
+import { setToken } from "../api/config";
 
 export const useAuth = () => {
   const [usuario, setUsuario] = useState(null);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    carregarUsuario();
+    inicializarAuth();
   }, []);
 
-  const carregarUsuario = async () => {
+  const inicializarAuth = async () => {
     try {
       console.log("🔄 useAuth - Iniciando carregamento do usuário...");
 
       const user = await authService.getUser();
       const token = await authService.getToken();
 
-      console.log("📦 useAuth - Usuário do AsyncStorage:", user);
-      console.log("🔑 useAuth - Token do AsyncStorage:", token);
+      console.log("📦 useAuth - Usuário salvo:", user);
+      console.log("🔑 useAuth - Token salvo:", token);
+
+      // 🔥 IMPORTANTE: RESTAURA TOKEN NO CONFIG.JS
+      if (token) {
+        console.log("🔐 useAuth - Aplicando token ao config.js...");
+        setToken(token);
+      }
 
       if (user) {
         console.log("✅ useAuth - Usuário encontrado:", user.nome);
         setUsuario(user);
       } else {
-        console.log("❌ useAuth - NENHUM usuário encontrado no AsyncStorage");
+        console.log("❌ useAuth - Nenhum usuário no storage");
         setUsuario(null);
       }
     } catch (error) {
@@ -41,7 +48,14 @@ export const useAuth = () => {
       const resultado = await authService.login(email, senha);
 
       if (resultado.sucesso && resultado.usuario) {
-        console.log("✅ useAuth - Login bem-sucedido:", resultado.usuario.nome);
+        console.log("✅ useAuth - Login OK:", resultado.usuario.nome);
+
+        // 🔥 SETA TOKEN NO CONFIG.JS
+        if (resultado.token) {
+          console.log("🔑 useAuth - Aplicando token apos login...");
+          setToken(resultado.token);
+        }
+
         setUsuario(resultado.usuario);
       } else {
         console.log("❌ useAuth - Login falhou");
@@ -60,6 +74,9 @@ export const useAuth = () => {
     console.log("🚪 useAuth - Fazendo logout...");
     await authService.logout();
     setUsuario(null);
+
+    // 🔥 Remove token da API
+    setToken(null);
   };
 
   return {

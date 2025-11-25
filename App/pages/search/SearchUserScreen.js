@@ -22,6 +22,8 @@ export default function SearchUserScreen({ navigation }) {
     try {
       const res = await api.get("/usuarios");
 
+      console.log("📦 Usuarios recebidos:", res);
+
       if (res?.sucesso) {
         setAllUsers(res.dados);
         setFiltered(res.dados);
@@ -47,7 +49,7 @@ export default function SearchUserScreen({ navigation }) {
   };
 
   const abrirPerfil = (id) => {
-    navigation.navigate("Profile", { id: item.id });
+    navigation.navigate("Profile", { id });
   };
 
   return (

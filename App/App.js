@@ -12,6 +12,7 @@ import ConversasScreen from "./pages/Messages/ConversasScreen";
 import NovaMensagemScreen from "./pages/Messages/NovaMensagemScreen";
 import CreatePostScreen from "./pages/post/CreatePostScreen";
 import SearchUserScreen from "./pages/search/SearchUserScreen";
+import EditProfileScreen from "./pages/profile/EditProfileScreen";
 
 const Stack = createStackNavigator();
 
@@ -56,7 +57,7 @@ export default function App() {
         <Stack.Screen
           name="MyProfile"
           component={MyProfileScreen}
-          options={{ title: "Meu Perfil", headerShown: false }}
+          options={{ title: "Meu Perfil" }}
         />
         <Stack.Screen
           name="Notifications"
@@ -84,6 +85,12 @@ export default function App() {
           options={{ title: "Nova Mensagem" }}
         />
         <Stack.Screen name="Chat" component={ChatScreen} />
+
+        <Stack.Screen
+          name="EditProfile"
+          component={EditProfileScreen}
+          options={{ title: "Editar Perfil" }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

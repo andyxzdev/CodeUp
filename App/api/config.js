@@ -1,79 +1,101 @@
 // api/config.js
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const BASE_URL = "http://10.0.2.2:8080/api";
 
-console.log("🔗 Config carregada - URL:", BASE_URL);
+console.log("🔗 API BASE:", BASE_URL);
 
 let token = null;
 
+// Atualiza token globalmente
 export const setToken = (newToken) => {
   token = newToken;
-  console.log("🔑 Token definido:", token ? "SIM" : "NÃO");
+  console.log("🔑 Token atualizado:", token ? "OK" : "VAZIO");
 };
 
-async function parseResponse(response) {
-  const text = await response.text();
-
-  try {
-    return JSON.parse(text); // tenta converter para JSON
-  } catch {
-    console.log("⚠ Resposta NÃO é JSON. Conteúdo cru:", text);
-    return {
-      sucesso: false,
-      mensagem: text,
-      dados: null,
-    };
-  }
-}
+// Gera headers
+const getHeaders = () => {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
+};
 
 export const api = {
   async get(endpoint) {
+    console.log(`📡 GET ${BASE_URL}${endpoint}`);
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+
+    const text = await response.text();
+    console.log("📥 GET RAW:", text);
+
     try {
-      console.log(`🚀 GET: ${BASE_URL}${endpoint}`);
-
-      const headers = {
-        "Content-Type": "application/json",
-      };
-
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const response = await fetch(`${BASE_URL}${endpoint}`, {
-        method: "GET",
-        headers,
-      });
-
-      const result = await parseResponse(response);
-      console.log("📥 Resultado GET:", result);
-
-      return result;
-    } catch (error) {
-      console.error("💥 ERRO NO GET:", error);
-      throw error;
+      return JSON.parse(text);
+    } catch (e) {
+      console.error("❌ ERRO AO PARSEAR JSON:", e, text);
+      throw e;
     }
   },
 
-  async post(endpoint, data) {
+  async post(endpoint, body) {
+    console.log(`📡 POST ${BASE_URL}${endpoint}`, body);
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    const text = await response.text();
+    console.log("📥 POST RAW:", text);
+
     try {
-      console.log(`🚀 POST: ${BASE_URL}${endpoint}`);
+      return JSON.parse(text);
+    } catch (e) {
+      console.error("❌ ERRO AO PARSEAR JSON:", e, text);
+      throw e;
+    }
+  },
 
-      const headers = {
-        "Content-Type": "application/json",
-      };
+  async put(endpoint, body) {
+    console.log(`📡 PUT ${BASE_URL}${endpoint}`, body);
 
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    });
 
-      const response = await fetch(`${BASE_URL}${endpoint}`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(data),
-      });
+    const text = await response.text();
+    console.log("📥 PUT RAW:", text);
 
-      const result = await parseResponse(response);
-      console.log("📥 Resultado POST:", result);
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error("❌ ERRO AO PARSEAR JSON:", e, text);
+      throw e;
+    }
+  },
 
-      return result;
-    } catch (error) {
-      console.error("💥 ERRO NO POST:", error);
-      throw error;
+  async delete(endpoint) {
+    console.log(`📡 DELETE ${BASE_URL}${endpoint}`);
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+
+    const text = await response.text();
+    console.log("📥 DELETE RAW:", text);
+
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error("❌ ERRO AO PARSEAR JSON:", e, text);
+      throw e;
     }
   },
 };

@@ -1,7 +1,7 @@
 // api/config.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const BASE_URL = "https://codeup-backend-kmif.onrender.com";
+const BASE_URL = "http://10.0.2.2:8080/api";
 
 console.log("🔗 API BASE:", BASE_URL);
 

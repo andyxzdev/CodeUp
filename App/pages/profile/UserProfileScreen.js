@@ -5,32 +5,30 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  ActivityIndicator,
   Alert,
 } from "react-native";
 import { api } from "../../api/config";
 import useAuth from "../../hooks/useAuth";
 
 export default function UserProfileScreen({ route, navigation }) {
-  // ==========================
-  // 🚨 Proteção contra params indefinidos
-  // ==========================
   const params = route?.params;
   const id = params?.id;
 
-  const { usuario } = useAuth();
-
-  // ==========================
-  // 🚨 Se tentar abrir o próprio perfil → redireciona
-  // ==========================
-  useEffect(() => {
-    if (usuario && id === usuario.id) {
-      navigation.replace("MyProfile");
-    }
-  }, [usuario, id]);
+  const { usuario: usuarioLogado } = useAuth();
 
   const [perfil, setPerfil] = useState(null);
   const [posts, setPosts] = useState([]);
   const [jaSegue, setJaSegue] = useState(false);
+
+  // =============================
+  // REDIRECIONA SE FOR O PRÓPRIO PERFIL
+  // =============================
+  useEffect(() => {
+    if (usuarioLogado && id === usuarioLogado.id) {
+      navigation.replace("MyProfile");
+    }
+  }, [usuarioLogado, id]);
 
   useEffect(() => {
     if (!id) return;
@@ -38,28 +36,36 @@ export default function UserProfileScreen({ route, navigation }) {
     carregarPosts();
   }, [id]);
 
-  // ======================
+  // =============================
   // CARREGAR PERFIL
-  // ======================
+  // =============================
   const carregarPerfil = async () => {
     try {
       const res = await api.get(`/usuarios/${id}`);
 
       if (res?.sucesso) {
         setPerfil(res.dados);
+
+        // Checar se o logado já segue
+        if (
+          res.dados?.seguidores?.some(
+            (seguidor) => seguidor.id === usuarioLogado?.id
+          )
+        ) {
+          setJaSegue(true);
+        }
       }
     } catch (e) {
       console.log("Erro ao carregar perfil:", e);
     }
   };
 
-  // ======================
+  // =============================
   // CARREGAR POSTS
-  // ======================
+  // =============================
   const carregarPosts = async () => {
     try {
       const res = await api.get(`/publicacoes/usuario/${id}`);
-
       if (res?.sucesso) {
         setPosts(res.dados);
       }
@@ -68,13 +74,13 @@ export default function UserProfileScreen({ route, navigation }) {
     }
   };
 
-  // ======================
+  // =============================
   // SEGUIR USUÁRIO
-  // ======================
+  // =============================
   const seguir = async () => {
-    if (!usuario || !id) return;
+    if (!usuarioLogado || !id) return;
 
-    if (usuario.id === id) {
+    if (usuarioLogado.id === id) {
       return Alert.alert("Ops", "Você não pode seguir você mesmo!");
     }
 
@@ -84,9 +90,7 @@ export default function UserProfileScreen({ route, navigation }) {
 
     try {
       const res = await api.post(`/usuarios/${id}/seguir`);
-
       if (res?.sucesso) {
-        Alert.alert("Sucesso", "Agora você segue este usuário!");
         setJaSegue(true);
         carregarPerfil();
       }
@@ -95,26 +99,33 @@ export default function UserProfileScreen({ route, navigation }) {
     }
   };
 
-  // ======================
+  // =============================
   // NAVEGAR PARA CHAT
-  // ======================
+  // =============================
   const enviarMensagem = () => {
     if (!perfil) return;
 
     navigation.navigate("Chat", {
-      usuarioId: id,
-      nome: perfil.nome,
+      destinatarioId: id,
+      destinatarioNome: perfil.nome,
     });
   };
 
-  if (!perfil) return <Text>Carregando perfil...</Text>;
+  if (!perfil) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Carregando perfil...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.nome}>{perfil.nome}</Text>
       <Text style={styles.email}>{perfil.email}</Text>
 
-      {/* BOTÃO SEGUIR */}
+      {/* Botão Seguir */}
       <TouchableOpacity
         style={[styles.botao, jaSegue && { backgroundColor: "#999" }]}
         onPress={seguir}
@@ -122,14 +133,13 @@ export default function UserProfileScreen({ route, navigation }) {
         <Text style={styles.botaoTxt}>{jaSegue ? "Seguindo" : "Seguir"}</Text>
       </TouchableOpacity>
 
-      {/* BOTÃO MENSAGEM */}
+      {/* Botão Mensagem */}
       <TouchableOpacity style={styles.botaoSec} onPress={enviarMensagem}>
         <Text style={styles.botaoTxt}>Enviar Mensagem</Text>
       </TouchableOpacity>
 
       <Text style={styles.section}>Publicações:</Text>
 
-      {/* LISTA DE POSTS */}
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id.toString()}
@@ -146,6 +156,12 @@ export default function UserProfileScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: { marginTop: 10, color: "#555" },
   nome: { fontSize: 22, fontWeight: "bold" },
   email: { color: "#555", marginBottom: 20 },
   botao: {

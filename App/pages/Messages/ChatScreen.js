@@ -16,8 +16,10 @@ import { useAuth } from "../../hooks/useAuth";
 import { mensagemService } from "../../api/mensagemService";
 
 export default function ChatScreen({ navigation, route }) {
-  const { usuario: usuarioLogado } = useAuth();
-  const { destinatarioId, destinatarioNome } = route.params;
+  const { usuario: usuarioLogado, carregando: carregandoUsuario } = useAuth();
+  const params = route?.params ?? {};
+  const destinatarioId = params?.destinatarioId ?? null;
+  const destinatarioNome = params?.destinatarioNome ?? null;
 
   const [mensagens, setMensagens] = useState([]);
   const [novaMensagem, setNovaMensagem] = useState("");
@@ -26,14 +28,22 @@ export default function ChatScreen({ navigation, route }) {
 
   const flatListRef = useRef();
 
-  // Carregar conversa
+  // Carregar conversa - usa guard clauses internas para evitar acessar id de null
   const carregarConversa = useCallback(async () => {
+    const userId = usuarioLogado?.id;
+    if (!userId || !destinatarioId) {
+      // garante que não tente buscar se faltar dados
+      setMensagens([]);
+      setCarregando(false);
+      return;
+    }
+
     try {
       setCarregando(true);
       console.log(`💬 Carregando conversa com ${destinatarioId}`);
 
       const conversa = await mensagemService.getConversa(
-        usuarioLogado.id,
+        userId,
         destinatarioId
       );
 
@@ -41,23 +51,29 @@ export default function ChatScreen({ navigation, route }) {
       setMensagens(conversa || []);
     } catch (error) {
       console.error("❌ Erro ao carregar conversa:", error);
-
       setMensagens([]);
     } finally {
       setCarregando(false);
     }
-  }, [usuarioLogado.id, destinatarioId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuarioLogado?.id, destinatarioId]);
 
   // Enviar mensagem
   const enviarMensagem = async () => {
     if (!novaMensagem.trim()) return;
 
+    const remetenteId = usuarioLogado?.id;
+    if (!remetenteId || !destinatarioId) {
+      Alert.alert("Erro", "Dados do usuário ou destinatário inválidos.");
+      return;
+    }
+
     try {
       setEnviando(true);
 
       const mensagemData = {
-        remetenteId: usuarioLogado.id,
-        destinatarioId: destinatarioId,
+        remetenteId,
+        destinatarioId,
         conteudo: novaMensagem.trim(),
       };
 
@@ -66,22 +82,29 @@ export default function ChatScreen({ navigation, route }) {
 
       // Limpar input e recarregar conversa
       setNovaMensagem("");
-      carregarConversa();
+      // espera um pouco para backend processar (opcional)
+      setTimeout(() => carregarConversa(), 250);
     } catch (error) {
       console.error("❌ Erro ao enviar mensagem:", error);
+      Alert.alert("Erro", "Falha ao enviar mensagem.");
     } finally {
       setEnviando(false);
     }
   };
 
-  // Carregar conversa quando a tela abrir
+  // Carregar conversa quando a tela abrir e quando usuário/destinatario forem definidos
   useEffect(() => {
+    // evita rodar enquanto o usuário ainda estiver carregando
+    if (carregandoUsuario) return;
     if (usuarioLogado?.id && destinatarioId) {
       carregarConversa();
+    } else {
+      setMensagens([]);
+      setCarregando(false);
     }
-  }, [usuarioLogado?.id, destinatarioId, carregarConversa]);
+  }, [carregandoUsuario, usuarioLogado?.id, destinatarioId, carregarConversa]);
 
-  // Configurar header
+  // Configurar header com nome do destinatário
   useEffect(() => {
     navigation.setOptions({
       title: destinatarioNome || "Chat",
@@ -89,10 +112,8 @@ export default function ChatScreen({ navigation, route }) {
     });
   }, [navigation, destinatarioNome]);
 
-  // Formatar hora da mensagem
   const formatarHora = (dataString) => {
     if (!dataString) return "";
-
     const data = new Date(dataString);
     return data.toLocaleTimeString("pt-BR", {
       hour: "2-digit",
@@ -100,9 +121,8 @@ export default function ChatScreen({ navigation, route }) {
     });
   };
 
-  // Renderizar mensagem
   const renderMensagem = ({ item }) => {
-    const isEu = item.remetenteId === usuarioLogado.id;
+    const isEu = item.remetenteId === usuarioLogado?.id;
 
     return (
       <View
@@ -151,6 +171,7 @@ export default function ChatScreen({ navigation, route }) {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
       {/* Lista de Mensagens */}
       <FlatList
@@ -160,13 +181,15 @@ export default function ChatScreen({ navigation, route }) {
         renderItem={renderMensagem}
         style={styles.mensagensList}
         contentContainerStyle={styles.mensagensContent}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+        onContentSizeChange={() =>
+          flatListRef.current?.scrollToEnd({ animated: true })
+        }
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="chatbubble-outline" size={48} color="#CCC" />
             <Text style={styles.emptyText}>
-              Inicie uma conversa com {destinatarioNome}
+              Inicie uma conversa com {destinatarioNome || "usuário"}
             </Text>
           </View>
         }

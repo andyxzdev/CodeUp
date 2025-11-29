@@ -1,105 +1,91 @@
+// api/usuarioService.js
 import { api } from "./config.js";
 
 export const usuarioService = {
   async getPerfil(usuarioId) {
     try {
-      console.log(
-        `🔍 Service: Buscando perfil do usuário ${usuarioId} (tipo: ${typeof usuarioId})`
-      );
-
-      if (!usuarioId || usuarioId === "undefined" || usuarioId === "null") {
-        console.log("❌ ID inválido no service");
-        throw new Error("ID do usuário inválido");
-      }
-
+      if (!usuarioId) throw new Error("ID do usuário inválido");
       const id = Number(usuarioId);
-
-      console.log(`👤 Fazendo requisição para /usuarios/${id}`);
-      const response = await api.get(`/usuarios/${id}`);
-
-      console.log("🔥 Resposta COMPLETA do backend:", response);
-      console.log("🔥 Data:", response.data);
-
-      return response.data;
+      const res = await api.get(`/usuarios/${id}`);
+      // Se backend padrão: {sucesso, mensagem, dados}
+      if (res?.sucesso && res.dados) return res.dados;
+      // se retorno direto do usuário
+      if (res?.id) return res;
+      // fallback
+      return null;
     } catch (error) {
-      console.error("💥 Erro COMPLETO no service:", error);
-      console.log("💥 Erro response:", error.response?.data);
-
-      return {
-        sucesso: false,
-        mensagem: "Erro ao carregar perfil",
-        dados: null,
-      };
+      console.error("💥 usuarioService.getPerfil:", error);
+      return null;
     }
   },
 
   async atualizarPerfil(usuarioId, dados) {
     try {
-      console.log(`✏️ Atualizando perfil do usuário ${usuarioId}`, dados);
-
-      const response = await api.put(`/usuarios/${usuarioId}/perfil`, dados);
-      return response.data;
+      const res = await api.put(`/usuarios/${usuarioId}/perfil`, dados);
+      if (res?.sucesso) return res.dados;
+      return res;
     } catch (error) {
-      console.error("❌ Erro ao atualizar perfil:", error);
+      console.error("💥 usuarioService.atualizarPerfil:", error);
       throw error;
     }
   },
 
   async getPublicacoesUsuario(usuarioId) {
     try {
-      console.log(`📝 Buscando publicações do usuário ${usuarioId}`);
-
-      const response = await api.get(`/publicacoes/usuario/${usuarioId}`);
-      return response.data;
+      const res = await api.get(`/publicacoes/usuario/${usuarioId}`);
+      return res?.dados ?? res;
     } catch (error) {
-      console.error("❌ Erro ao buscar publicações do usuário:", error);
+      console.error("💥 usuarioService.getPublicacoesUsuario:", error);
       throw error;
     }
   },
 
   async getPublicacoesSalvas(usuarioId) {
     try {
-      console.log(`⭐ Buscando publicações salvas do usuário ${usuarioId}`);
-
-      const response = await api.get(`/usuarios/${usuarioId}/salvos`);
-      return response.data;
+      const res = await api.get(`/usuarios/${usuarioId}/salvos`);
+      return res?.dados ?? res;
     } catch (error) {
-      console.error("❌ Erro ao buscar publicações salvas:", error);
+      console.error("💥 usuarioService.getPublicacoesSalvas:", error);
       throw error;
     }
   },
 
+  // retorna sempre um array []
   async buscarUsuarios() {
     try {
-      console.log("👥 Buscando lista de usuários...");
-
-      const response = await api.get("/usuarios");
-      console.log("📦 Resposta usuários:", response);
-
-      return response.data;
+      const res = await api.get("/usuarios");
+      // backend padrão {sucesso:true, dados: [...]}
+      if (res?.sucesso && Array.isArray(res.dados)) return res.dados;
+      // se retorno for array puro
+      if (Array.isArray(res)) return res;
+      // se backend devolve {dados: [...]}
+      if (res?.dados && Array.isArray(res.dados)) return res.dados;
+      // se for objeto com dados em res.data
+      if (res?.data && Array.isArray(res.data)) return res.data;
+      console.warn("usuarioService.buscarUsuarios: resposta inesperada:", res);
+      return [];
     } catch (error) {
-      console.error("❌ Erro ao buscar usuários:", error);
-      throw error;
+      console.error("💥 usuarioService.buscarUsuarios:", error);
+      return [];
     }
   },
 
+  // buscar por nome (usa buscarUsuarios)
   async buscarUsuariosPorNome(nome) {
     try {
-      console.log(`🔍 Buscando usuários por nome: ${nome}`);
-
-      const response = await api.get("/usuarios");
-      const usuarios = response.data.dados || response.data;
-
-      const usuariosFiltrados = usuarios.filter(
-        (usuario) =>
-          usuario.nome.toLowerCase().includes(nome.toLowerCase()) ||
-          usuario.email.toLowerCase().includes(nome.toLowerCase())
-      );
-
-      return usuariosFiltrados;
+      if (!nome || !nome.trim()) return await this.buscarUsuarios();
+      const todos = await this.buscarUsuarios();
+      return todos.filter((u) => {
+        const n = (u.nome || "").toString().toLowerCase();
+        const e = (u.email || "").toString().toLowerCase();
+        const q = nome.toLowerCase();
+        return n.includes(q) || e.includes(q);
+      });
     } catch (error) {
-      console.error("❌ Erro ao buscar usuários:", error);
-      throw error;
+      console.error("💥 usuarioService.buscarUsuariosPorNome:", error);
+      return [];
     }
   },
 };
+
+export default usuarioService;

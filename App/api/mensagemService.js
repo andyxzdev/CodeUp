@@ -2,19 +2,61 @@
 import { api } from "./config";
 
 export const mensagemService = {
-  enviarMensagem(remetenteId, destinatarioId, conteudo) {
-    return api.post("/chat/enviar", {
+  // ======================
+  // ENVIAR MENSAGEM
+  // ======================
+  async enviar({ remetenteId, destinatarioId, conteudo }) {
+    const res = await api.post("/chat/enviar", {
       remetenteId,
       destinatarioId,
       conteudo,
     });
+
+    return res; // mantém padrão da API
   },
 
-  carregarConversa(usuario1, usuario2) {
-    return api.get(`/chat/conversa?usuario1=${usuario1}&usuario2=${usuario2}`);
+  // ======================
+  // CARREGAR MENSAGENS DO CHAT
+  // ======================
+  async getConversa(remetenteId, destinatarioId) {
+    const resposta = await api.get(
+      `/chat/conversa?usuario1=${remetenteId}&usuario2=${destinatarioId}`
+    );
+
+    // 🔥 ESTE ENDPOINT RETORNA ARRAY PURO
+    if (Array.isArray(resposta)) return resposta;
+
+    console.warn("⚠️ Resposta inesperada em getConversa:", resposta);
+    return [];
   },
 
-  carregarConversasRecentes(usuarioId) {
-    return api.get(`/chat/conversas-recentes/${usuarioId}`);
+  // ======================
+  // CARREGAR CONVERSAS RECENTES
+  // ======================
+  async getConversasRecentes(usuarioId) {
+    const resposta = await api.get(`/chat/conversas-recentes/${usuarioId}`);
+
+    // 🔥 API padrão
+    if (resposta?.sucesso && Array.isArray(resposta.dados)) {
+      return {
+        sucesso: true,
+        dados: resposta.dados,
+      };
+    }
+
+    // 🔥 Caso raro: backend retornou ARRAY PURO
+    if (Array.isArray(resposta)) {
+      return {
+        sucesso: true,
+        dados: resposta,
+      };
+    }
+
+    console.warn("⚠️ Resposta inesperada em conversas-recentes:", resposta);
+
+    return {
+      sucesso: false,
+      dados: [],
+    };
   },
 };

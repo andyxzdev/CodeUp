@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
+// pages/Messages/NovaMensagemScreen.js
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,80 +9,59 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../hooks/useAuth";
 import { usuarioService } from "../../api/usuarioService";
 
+// simple debounce
+function useDebounce(value, delay = 300) {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return v;
+}
+
 export default function NovaMensagemScreen({ navigation }) {
   const { usuario: usuarioLogado } = useAuth();
   const [usuarios, setUsuarios] = useState([]);
-  const [usuariosFiltrados, setUsuariosFiltrados] = useState([]);
-  const [pesquisa, setPesquisa] = useState("");
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 250);
   const [carregando, setCarregando] = useState(true);
 
   const carregarUsuarios = useCallback(async () => {
     try {
       setCarregando(true);
-      console.log("👥 Carregando lista de usuários...");
-
-      if (!usuarioLogado) {
-        setCarregando(false);
-        return;
-      }
-
-      const response = await usuarioService.buscarUsuarios();
-      console.log("📦 Usuários carregados:", response);
-
-      let listaUsuarios = [];
-
-      if (response.dados) {
-        listaUsuarios = response.dados;
-      } else if (Array.isArray(response)) {
-        listaUsuarios = response;
-      }
-
-      const usuariosSemEu = listaUsuarios.filter(
-        (usuario) => usuario.id !== usuarioLogado.id
-      );
-
-      setUsuarios(usuariosSemEu);
-      setUsuariosFiltrados(usuariosSemEu);
+      const lista = await usuarioService.buscarUsuarios();
+      // remove usuário logado
+      const filtrada = lista.filter((u) => u.id !== usuarioLogado?.id);
+      setUsuarios(filtrada);
     } catch (error) {
-      console.error("❌ Erro ao carregar usuários:", error);
+      console.error("Erro ao carregar usuários:", error);
       setUsuarios([]);
-      setUsuariosFiltrados([]);
     } finally {
       setCarregando(false);
     }
-  }, [usuarioLogado]);
-
-  useEffect(() => {
-    if (pesquisa.trim() === "") {
-      setUsuariosFiltrados(usuarios);
-    } else {
-      const filtrados = usuarios.filter(
-        (usuario) =>
-          usuario.nome.toLowerCase().includes(pesquisa.toLowerCase()) ||
-          usuario.email.toLowerCase().includes(pesquisa.toLowerCase())
-      );
-      setUsuariosFiltrados(filtrados);
-    }
-  }, [pesquisa, usuarios]);
+  }, [usuarioLogado?.id]);
 
   useEffect(() => {
     carregarUsuarios();
   }, [carregarUsuarios]);
 
+  // filtra localmente (mais rápido) mas também permite busca por API:
+  const usuariosFiltrados = useMemo(() => {
+    const q = debouncedQuery.trim().toLowerCase();
+    if (!q) return usuarios;
+    return usuarios.filter((u) => {
+      const nome = (u.nome || "").toString().toLowerCase();
+      const email = (u.email || "").toString().toLowerCase();
+      return nome.includes(q) || email.includes(q);
+    });
+  }, [debouncedQuery, usuarios]);
+
   const selecionarUsuario = (usuario) => {
-    console.log("💬 Iniciando conversa com:", usuario.nome);
-
-    if (!usuarioLogado) {
-      Alert.alert("Erro", "Você precisa estar logado para enviar mensagens");
-      return;
-    }
-
     navigation.navigate("Chat", {
       destinatarioId: usuario.id,
       destinatarioNome: usuario.nome,
@@ -97,33 +77,13 @@ export default function NovaMensagemScreen({ navigation }) {
         source={require("../../../assets/user1.jpg")}
         style={styles.avatar}
       />
-
       <View style={styles.usuarioInfo}>
         <Text style={styles.nome}>{item.nome}</Text>
         <Text style={styles.email}>{item.email}</Text>
       </View>
-
       <Ionicons name="chevron-forward" size={20} color="#999" />
     </TouchableOpacity>
   );
-
-  if (!usuarioLogado) {
-    return (
-      <View style={styles.errorContainer}>
-        <Ionicons name="log-in-outline" size={64} color="#FF3B30" />
-        <Text style={styles.errorText}>Usuário não logado</Text>
-        <Text style={styles.errorSubtext}>
-          Faça login para enviar mensagens
-        </Text>
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={() => navigation.navigate("Login")}
-        >
-          <Text style={styles.loginButtonText}>Fazer Login</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -138,37 +98,32 @@ export default function NovaMensagemScreen({ navigation }) {
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#999" />
         <TextInput
-          style={styles.searchInput}
           placeholder="Pesquisar usuários..."
-          value={pesquisa}
-          onChangeText={setPesquisa}
-          autoFocus={true}
+          value={query}
+          onChangeText={setQuery}
+          style={styles.searchInput}
+          clearButtonMode="while-editing"
         />
       </View>
 
       {carregando ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Carregando usuários...</Text>
         </View>
       ) : (
         <FlatList
           data={usuariosFiltrados}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) =>
+            item.id?.toString() || Math.random().toString()
+          }
           renderItem={renderUsuario}
-          showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="people-outline" size={64} color="#CCC" />
               <Text style={styles.emptyTitle}>
-                {pesquisa
+                {query
                   ? "Nenhum usuário encontrado"
                   : "Nenhum usuário disponível"}
-              </Text>
-              <Text style={styles.emptyText}>
-                {pesquisa
-                  ? "Tente buscar com outros termos"
-                  : "Todos os usuários estão listados aqui"}
               </Text>
             </View>
           }
@@ -179,125 +134,43 @@ export default function NovaMensagemScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
+    borderBottomColor: "#f0f0f0",
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#000",
-  },
+  headerTitle: { fontSize: 18, fontWeight: "bold" },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F5F5F5",
-    margin: 15,
-    paddingHorizontal: 15,
+    margin: 12,
+    paddingHorizontal: 12,
+    backgroundColor: "#f7f7f7",
     borderRadius: 10,
-    height: 40,
+    height: 44,
   },
-  searchInput: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 16,
-    color: "#333",
-  },
+  searchInput: { marginLeft: 8, flex: 1 },
   usuarioItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F5F5F5",
+    borderBottomColor: "#f5f5f5",
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 15,
-  },
-  usuarioInfo: {
-    flex: 1,
-  },
-  nome: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000",
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 14,
-    color: "#666",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#666",
-  },
+  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 12 },
+  usuarioInfo: { flex: 1 },
+  nome: { fontWeight: "600" },
+  email: { color: "#666", marginTop: 2 },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 40,
-    marginTop: 100,
+    marginTop: 60,
   },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#666",
-    marginTop: 15,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: "#999",
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FF3B30",
-    marginTop: 10,
-    marginBottom: 5,
-  },
-  errorSubtext: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  loginButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  loginButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
+  emptyTitle: { marginTop: 12, color: "#777" },
 });

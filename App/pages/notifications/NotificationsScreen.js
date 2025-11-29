@@ -1,87 +1,130 @@
-// App/pages/Notifications/NotificationsScreen.js - CORRIGIDO
+// App/pages/Notifications/NotificationsScreen.js
 import {
   StyleSheet,
   Text,
   View,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { notificacaoService } from "../../api/notificacaoService";
 
-const notificaçõesItens = [
-  {
-    id: "1",
-    title: "Boas-Vindas ao CodeUp!😘",
-    message: "Obrigado por se juntar a nós! Explore nosso App e se divirta.",
-    isRead: false,
-    date: "2025-10-13T10:00:00Z",
-  },
-  {
-    id: "2",
-    title: "Atualização de Perfil",
-    message: "Seu Perfil foi atualizado com sucesso.",
-    isRead: true,
-    date: "2025-10-13T12:00:00Z",
-  },
-];
+export default function NotificationsScreen() {
+  const [notifications, setNotifications] = useState([]);
+  const [carregando, setCarregando] = useState(true);
 
-const NotificationsItem = ({ item, onMarkAsRead }) => {
-  const safeDateString = item.date.replace(/-/g, "/");
+  // 🔥 Carregar notificações do backend
+  const carregarNotificacoes = useCallback(async () => {
+    try {
+      setCarregando(true);
+      console.log("📡 Carregando notificações...");
 
-  return (
-    <TouchableOpacity
-      style={[
-        styles.itemContainer,
-        !item.isRead && styles.itemUnreadBackground,
-      ]}
-      onPress={() => onMarkAsRead(item.id)}
-    >
-      <View style={styles.notificationsContent}>
-        {!item.isRead && (
-          <Ionicons
-            name="ellipse"
-            size={10}
-            color="blue"
-            style={styles.unreadIndicator}
-          />
-        )}
-        <View style={styles.textContainer}>
-          <Text style={{ fontWeight: item.isRead ? "normal" : "bold" }}>
-            {item.title}
-          </Text>
-          <Text style={styles.messageText} numberOfLines={2}>
-            {item.message}
+      const lista = await notificacaoService.listar();
+
+      console.log("📥 Notificações recebidas:", lista);
+
+      setNotifications(lista);
+    } catch (err) {
+      console.log("❌ Erro ao carregar notificações:", err);
+      setNotifications([]);
+    } finally {
+      setCarregando(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    carregarNotificacoes();
+  }, []);
+
+  // 🔵 Marcar como lida
+  const marcarComoLida = async (id) => {
+    try {
+      await notificacaoService.marcarComoLida(id);
+
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, lida: true } : n))
+      );
+    } catch (e) {
+      console.log("❌ Erro ao marcar como lida:", e);
+    }
+  };
+
+  const NotificationsItem = ({ item }) => {
+    const safeDate = item.createdAt?.replace(/-/g, "/");
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.itemContainer,
+          !item.lida && styles.itemUnreadBackground,
+        ]}
+        onPress={() => marcarComoLida(item.id)}
+      >
+        <View style={styles.notificationsContent}>
+          {!item.lida && (
+            <Ionicons
+              name="ellipse"
+              size={10}
+              color="blue"
+              style={styles.unreadIndicator}
+            />
+          )}
+
+          <View style={styles.textContainer}>
+            <Text style={{ fontWeight: item.lida ? "normal" : "bold" }}>
+              {item.mensagem}
+            </Text>
+
+            <Text style={styles.messageText}>
+              {item.tipo === "curtida" && "👍 Curtida na sua publicação"}
+              {item.tipo === "comentario" && "💬 Novo comentário"}
+              {item.tipo === "seguindo" && "👤 Novo seguidor"}
+              {item.tipo === "mensagem" && "📩 Nova mensagem received"}
+              {item.tipo === "salvo" && "⭐ Salvou sua publicação"}
+            </Text>
+          </View>
+
+          <Text style={styles.dateText}>
+            {safeDate
+              ? new Date(safeDate).toLocaleTimeString("pt-BR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "--:--"}
           </Text>
         </View>
-        <Text style={styles.dateText}>
-          {new Date(safeDateString).toLocaleTimeString("pt-BR", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  if (carregando) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={{ marginTop: 10 }}>Carregando notificações...</Text>
       </View>
-    </TouchableOpacity>
-  );
-};
-
-const renderNotificationsItem = ({ item }) => (
-  <NotificationsItem item={item} onMarkAsRead={() => {}} />
-);
-
-// 🔥 CORREÇÃO AQUI: Mude para NotificationsScreen (com N maiúsculo)
-export default function NotificationsScreen() {
-  const [notifications, setNotifications] = useState(notificaçõesItens);
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.HeaderTitle}>Notificação</Text>
+      <Text style={styles.HeaderTitle}>Notificações</Text>
 
       <FlatList
         data={notifications}
-        keyExtractor={(item) => item.id}
-        renderItem={renderNotificationsItem}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => <NotificationsItem item={item} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ListEmptyComponent={() => (
+          <View style={{ marginTop: 100, alignItems: "center" }}>
+            <Ionicons name="notifications-off-outline" size={64} color="#AAA" />
+            <Text style={{ marginTop: 10, color: "#777" }}>
+              Nenhuma notificação no momento
+            </Text>
+          </View>
+        )}
       />
     </View>
   );
@@ -111,11 +154,10 @@ const styles = StyleSheet.create({
     borderLeftColor: "#1E90FF",
   },
   notificationsContent: {
-    // 🔥 CORREÇÃO: estava notificationContent
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    flex: 1,
   },
   unreadIndicator: {
     marginRight: 10,
@@ -134,11 +176,15 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 10,
     color: "#aaa",
-    alignSelf: "flex-start",
   },
   separator: {
     height: 1,
     backgroundColor: "#eee",
     marginLeft: 15,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

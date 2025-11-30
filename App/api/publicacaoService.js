@@ -1,96 +1,70 @@
-// App/api/publicacaoService.js
-import { api } from "./config.js";
+// api/publicacaoService.js
+import { api, token as tokenGlobal, BASE_URL } from "./config.js";
 
 export const publicacaoService = {
-  // Buscar feed de publicações
   async getFeed(page = 0, size = 10) {
-    try {
-      console.log(`📝 Buscando feed - página ${page}, tamanho ${size}`);
-
-      const response = await api.get(
-        `/publicacoes/feed?page=${page}&size=${size}`
-      );
-      return response;
-    } catch (error) {
-      console.error("❌ Erro ao buscar feed:", error);
-      throw error;
-    }
+    return await api.get(`/publicacoes/feed?page=${page}&size=${size}`);
   },
 
-  // Criar nova publicação
-  async criarPublicacao(conteudo) {
+  async criarPublicacao({ conteudo, imagemUri }) {
     try {
-      console.log("📝 Criando nova publicação:", conteudo);
+      console.log("📝 Criando nova publicação");
 
-      const response = await api.post("/publicacoes", {
-        conteudo: conteudo,
+      const token = tokenGlobal; // pega token real
+      console.log("🔑 Token usado no upload:", token);
+
+      const formData = new FormData();
+      formData.append("conteudo", conteudo);
+
+      if (imagemUri) {
+        const filename = imagemUri.split("/").pop();
+        const ext = filename.split(".").pop().toLowerCase();
+
+        const mime =
+          ext === "png"
+            ? "image/png"
+            : ext === "jpg" || ext === "jpeg"
+            ? "image/jpeg"
+            : "image/*";
+
+        formData.append("imagem", {
+          uri: imagemUri,
+          name: filename,
+          type: mime,
+        });
+      }
+
+      const response = await fetch(`${BASE_URL}/publicacoes`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
       });
 
-      console.log("✅ Publicação criada:", response);
-      return response;
-    } catch (error) {
-      console.error("❌ Erro ao criar publicação:", error);
-      throw error;
+      const raw = await response.text();
+      console.log("📥 RAW multipart:", raw);
+
+      return JSON.parse(raw);
+    } catch (err) {
+      console.log("❌ Erro ao criar publicação:", err);
+      throw err;
     }
   },
 
-  // Curtir publicação
-  async curtirPublicacao(publicacaoId) {
-    try {
-      console.log(`❤️ Curtindo publicação ${publicacaoId}`);
-
-      // 🔥 IMPORTANTE: Seu backend espera usuarioId como param
-      // Vamos precisar do userId do usuário logado
-      const response = await api.post(
-        `/publicacoes/${publicacaoId}/curtida?usuarioId=1`
-      ); // Temporário
-
-      console.log("✅ Publicação curtida:", response);
-      return response;
-    } catch (error) {
-      console.error("❌ Erro ao curtir publicação:", error);
-      throw error;
-    }
+  async curtirPublicacao(id) {
+    return await api.post(`/publicacoes/${id}/curtida`);
   },
 
-  // Salvar publicação
-  async salvarPublicacao(publicacaoId) {
-    try {
-      console.log(`⭐ Salvando publicação ${publicacaoId}`);
-
-      const response = await api.post(`/publicacoes/${publicacaoId}/salvar`);
-
-      console.log("✅ Publicação salva:", response);
-      return response;
-    } catch (error) {
-      console.error("❌ Erro ao salvar publicação:", error);
-      throw error;
-    }
+  async salvarPublicacao(id) {
+    return await api.post(`/publicacoes/${id}/salvar`);
   },
 
-  // Buscar publicações de um usuário
   async getPublicacoesUsuario(usuarioId) {
-    try {
-      console.log(`👤 Buscando publicações do usuário ${usuarioId}`);
-
-      const response = await api.get(`/publicacoes/usuario/${usuarioId}`);
-      return response;
-    } catch (error) {
-      console.error("❌ Erro ao buscar publicações do usuário:", error);
-      throw error;
-    }
+    return await api.get(`/publicacoes/usuario/${usuarioId}`);
   },
 
-  // Buscar publicação por ID
   async getPublicacao(id) {
-    try {
-      console.log(`🔍 Buscando publicação ${id}`);
-
-      const response = await api.get(`/publicacoes/${id}`);
-      return response;
-    } catch (error) {
-      console.error("❌ Erro ao buscar publicação:", error);
-      throw error;
-    }
+    return await api.get(`/publicacoes/${id}`);
   },
 };

@@ -1,10 +1,11 @@
 // api/config.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const BASE_URL = "http://10.0.2.2:8080/api";
+//export const BASE_URL = "http://10.0.2.2:8080/api";
+export const BASE_URL = "http://10.0.10.171:8080/api";
 console.log("🔗 API BASE:", BASE_URL);
 
-let token = null;
+export let token = null; // <- exportado para ser acessado pelo publicacaoService
 
 export const setToken = (newToken) => {
   token = newToken;
@@ -18,14 +19,11 @@ const getHeaders = () => {
 };
 
 async function parseResponse(response) {
-  // retorna texto bruto se não for JSON
   const text = await response.text();
-  // debug
   console.log(`📥 RAW (${response.status}):`, text);
   try {
     return JSON.parse(text);
-  } catch (e) {
-    // retorna texto simples quando backend devolve string simples
+  } catch {
     return text;
   }
 }
@@ -38,8 +36,7 @@ export const api = {
       headers: getHeaders(),
     });
     if (!response.ok) {
-      const body = await response.text();
-      throw new Error(`HTTP ${response.status}: ${body}`);
+      throw new Error(`HTTP ${response.status}`);
     }
     return await parseResponse(response);
   },
@@ -52,8 +49,7 @@ export const api = {
       body: JSON.stringify(body),
     });
     if (!response.ok) {
-      const bodyText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${bodyText}`);
+      throw new Error(`HTTP ${response.status}`);
     }
     return await parseResponse(response);
   },
@@ -66,8 +62,7 @@ export const api = {
       body: JSON.stringify(body),
     });
     if (!response.ok) {
-      const bodyText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${bodyText}`);
+      throw new Error(`HTTP ${response.status}`);
     }
     return await parseResponse(response);
   },
@@ -79,8 +74,7 @@ export const api = {
       headers: getHeaders(),
     });
     if (!response.ok) {
-      const bodyText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${bodyText}`);
+      throw new Error(`HTTP ${response.status}`);
     }
     return await parseResponse(response);
   },

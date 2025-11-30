@@ -1,3 +1,4 @@
+// App/screens/HomeScreen.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -12,12 +13,15 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../hooks/useAuth";
 import { publicacaoService } from "../../api/publicacaoService";
+import ModalComentarios from "../../../components/ModalComentarios";
 
 export default function HomeScreen({ navigation }) {
-  const { usuario, logout } = useAuth();
+  const { usuario } = useAuth();
   const [publicacoes, setPublicacoes] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [postSelecionado, setPostSelecionado] = useState(null);
+  const [mostrarComentarios, setMostrarComentarios] = useState(false);
 
   const carregarFeed = async () => {
     try {
@@ -27,7 +31,7 @@ export default function HomeScreen({ navigation }) {
 
       if (response.sucesso && response.dados?.content) {
         const publicacoesValidas = response.dados.content.filter(
-          (pub) => pub?.id && pub?.conteudo
+          (pub) => pub?.id && (pub?.conteudo || pub?.imageUrl)
         );
 
         setPublicacoes(publicacoesValidas);
@@ -42,6 +46,10 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
+  useEffect(() => {
+    carregarFeed();
+  }, []);
+
   const handleCurtir = async (publicacaoId) => {
     try {
       const response = await publicacaoService.curtirPublicacao(publicacaoId);
@@ -50,7 +58,7 @@ export default function HomeScreen({ navigation }) {
         setPublicacoes((prev) =>
           prev.map((pub) =>
             pub.id === publicacaoId
-              ? { ...pub, curtidasCount: pub.curtidasCount + 1 }
+              ? { ...pub, curtidasCount: (pub.curtidasCount || 0) + 1 }
               : pub
           )
         );
@@ -72,9 +80,10 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  useEffect(() => {
-    carregarFeed();
-  }, []);
+  const abrirComentarios = (item) => {
+    setPostSelecionado(item);
+    setMostrarComentarios(true);
+  };
 
   const renderPublicacao = ({ item }) => (
     <View style={styles.postContainer}>
@@ -97,6 +106,11 @@ export default function HomeScreen({ navigation }) {
       {/* CONTEÚDO */}
       <Text style={styles.postText}>{item.conteudo}</Text>
 
+      {/* IMAGEM (se existir) */}
+      {item.imageUrl ? (
+        <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
+      ) : null}
+
       {/* AÇÕES */}
       <View style={styles.actions}>
         <TouchableOpacity
@@ -107,8 +121,12 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.actionLabel}>{item.curtidasCount || 0}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionBtn}>
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={() => abrirComentarios(item)}
+        >
           <Ionicons name="chatbubble-outline" size={22} color="#555" />
+          <Text style={styles.actionLabel}>{item.comentariosCount || 0}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -132,6 +150,14 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Modal Comentários */}
+      {mostrarComentarios && postSelecionado && (
+        <ModalComentarios
+          publicacaoId={postSelecionado.id}
+          onClose={() => setMostrarComentarios(false)}
+        />
+      )}
+
       {/* HEADER */}
       <View style={styles.header}>
         <Image
@@ -230,7 +256,14 @@ const styles = StyleSheet.create({
   username: { fontSize: 16, fontWeight: "bold", color: "#333" },
   time: { fontSize: 12, color: "#777" },
 
-  postText: { fontSize: 15, color: "#333", marginBottom: 15 },
+  postText: { fontSize: 15, color: "#333", marginBottom: 12 },
+
+  postImage: {
+    width: "100%",
+    height: 250,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
 
   /* AÇÕES */
   actions: {
@@ -238,8 +271,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 25,
   },
-  actionBtn: { flexDirection: "row", alignItems: "center" },
-  actionLabel: { marginLeft: 5, fontSize: 14, color: "#555" },
+  actionBtn: { flexDirection: "row", alignItems: "center", marginRight: 18 },
+  actionLabel: { marginLeft: 6, fontSize: 14, color: "#555" },
 
   /* LOADING */
   loading: { flex: 1, justifyContent: "center", alignItems: "center" },

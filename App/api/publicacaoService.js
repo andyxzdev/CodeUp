@@ -10,7 +10,7 @@ export const publicacaoService = {
     try {
       console.log("📝 Criando nova publicação");
 
-      const token = tokenGlobal; // pega token real
+      const token = tokenGlobal;
       console.log("🔑 Token usado no upload:", token);
 
       const formData = new FormData();
@@ -50,14 +50,6 @@ export const publicacaoService = {
       console.log("❌ Erro ao criar publicação:", err);
       throw err;
     }
-  },
-
-  async curtirPublicacao(id) {
-    return await api.post(`/publicacoes/${id}/curtida`);
-  },
-
-  async salvarPublicacao(id) {
-    return await api.post(`/publicacoes/${id}/salvar`);
   },
 
   async getPublicacoesUsuario(usuarioId) {

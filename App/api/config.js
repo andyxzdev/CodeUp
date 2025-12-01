@@ -1,11 +1,10 @@
 // api/config.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-//export const BASE_URL = "http://10.0.2.2:8080/api";
 export const BASE_URL = "http://10.0.10.171:8080/api";
 console.log("🔗 API BASE:", BASE_URL);
 
-export let token = null; // <- exportado para ser acessado pelo publicacaoService
+export let token = null;
 
 export const setToken = (newToken) => {
   token = newToken;
@@ -21,6 +20,7 @@ const getHeaders = () => {
 async function parseResponse(response) {
   const text = await response.text();
   console.log(`📥 RAW (${response.status}):`, text);
+
   try {
     return JSON.parse(text);
   } catch {
@@ -35,9 +35,7 @@ export const api = {
       method: "GET",
       headers: getHeaders(),
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await parseResponse(response);
   },
 
@@ -48,9 +46,7 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(body),
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await parseResponse(response);
   },
 
@@ -61,9 +57,7 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(body),
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await parseResponse(response);
   },
 
@@ -73,9 +67,7 @@ export const api = {
       method: "DELETE",
       headers: getHeaders(),
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await parseResponse(response);
   },
 };

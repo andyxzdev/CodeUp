@@ -18,14 +18,11 @@ import { useAuth } from "../../hooks/useAuth";
 
 export default function CreatePostScreen({ navigation }) {
   const [texto, setTexto] = useState("");
-  const [imagem, setImagem] = useState(null); // { uri, name, type }
+  const [imagem, setImagem] = useState(null);
   const [carregando, setCarregando] = useState(false);
 
   const { usuario } = useAuth();
 
-  //---------------------------------------------------------
-  // PERMISSÕES
-  //---------------------------------------------------------
   useEffect(() => {
     (async () => {
       if (Platform.OS !== "web") {
@@ -43,9 +40,6 @@ export default function CreatePostScreen({ navigation }) {
     })();
   }, []);
 
-  //---------------------------------------------------------
-  // ESCOLHER IMAGEM DA GALERIA
-  //---------------------------------------------------------
   const escolherImagem = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -62,22 +56,16 @@ export default function CreatePostScreen({ navigation }) {
         name: asset.fileName || asset.uri.split("/").pop(),
         type: asset.mimeType || "image/jpeg",
       });
-    } catch (e) {
-      console.log("❌ Erro ao escolher imagem:", e);
+    } catch {
       Alert.alert("Erro", "Não foi possível carregar a imagem");
     }
   };
 
-  //---------------------------------------------------------
-  // TIRAR FOTO
-  //---------------------------------------------------------
   const tirarFoto = async () => {
     try {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.7,
-        allowsEditing: false,
-        cameraType: ImagePicker.CameraType.back,
       });
 
       if (result.canceled) return;
@@ -89,15 +77,11 @@ export default function CreatePostScreen({ navigation }) {
         name: asset.fileName || asset.uri.split("/").pop(),
         type: asset.mimeType || "image/jpeg",
       });
-    } catch (e) {
-      console.log("❌ ERRO AO TIRAR FOTO:", JSON.stringify(e, null, 2));
+    } catch {
       Alert.alert("Erro", "Não foi possível capturar a foto");
     }
   };
 
-  //---------------------------------------------------------
-  // CRIAR PUBLICAÇÃO
-  //---------------------------------------------------------
   const criarPublicacao = async () => {
     if (!texto.trim() && !imagem) {
       return Alert.alert("Erro", "Digite algo ou envie uma imagem.");
@@ -106,14 +90,10 @@ export default function CreatePostScreen({ navigation }) {
     setCarregando(true);
 
     try {
-      const payload = {
+      const res = await publicacaoService.criarPublicacao({
         conteudo: texto,
         imagemUri: imagem ? imagem.uri : null,
-        imagemName: imagem ? imagem.name : null,
-        imagemType: imagem ? imagem.type : null,
-      };
-
-      const res = await publicacaoService.criarPublicacao(payload);
+      });
 
       console.log("📤 RESPOSTA BACKEND:", res);
 
@@ -126,16 +106,12 @@ export default function CreatePostScreen({ navigation }) {
         Alert.alert("Erro", res?.mensagem || "Não foi possível publicar");
       }
     } catch (e) {
-      console.log("❌ Erro ao criar publicação:", e);
       Alert.alert("Erro", "Falha ao criar publicação");
     } finally {
       setCarregando(false);
     }
   };
 
-  //---------------------------------------------------------
-  // UI
-  //---------------------------------------------------------
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>Criar Publicação</Text>
@@ -148,7 +124,6 @@ export default function CreatePostScreen({ navigation }) {
         onChangeText={setTexto}
       />
 
-      {/* Preview da imagem */}
       {imagem?.uri && (
         <View style={styles.previewContainer}>
           <Image source={{ uri: imagem.uri }} style={styles.preview} />
@@ -188,16 +163,13 @@ export default function CreatePostScreen({ navigation }) {
   );
 }
 
-//------------------------------------------------------------
-// ESTILOS
-//------------------------------------------------------------
-const styles = StyleSheet.create({
+const styles = {
   container: { flex: 1, padding: 20, backgroundColor: "#fff" },
   titulo: {
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 10,
     textAlign: "center",
+    marginBottom: 10,
   },
   input: {
     height: 150,
@@ -213,24 +185,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     marginBottom: 20,
   },
-  iconBtn: {
-    alignItems: "center",
-  },
-  iconLabel: {
-    marginTop: 6,
-    color: "#007AFF",
-  },
+  iconBtn: { alignItems: "center" },
+  iconLabel: { marginTop: 6, color: "#007AFF" },
   botao: {
     backgroundColor: "#007bff",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
   },
-  botaoTxt: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
+  botaoTxt: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   previewContainer: {
     height: 220,
     marginBottom: 12,
@@ -238,11 +201,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     position: "relative",
   },
-  preview: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 12,
-  },
+  preview: { width: "100%", height: "100%", borderRadius: 12 },
   removeBtn: {
     position: "absolute",
     top: 8,
@@ -251,4 +210,4 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 2,
   },
-});
+};

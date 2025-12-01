@@ -11,11 +11,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState, useCallback } from "react";
 import { notificacaoService } from "../../api/notificacaoService";
 
+// 🟦 Converter o createdAt recebido como array
+const parseCreatedAt = (arr) => {
+  if (!arr || !Array.isArray(arr)) return null;
+  return new Date(arr[0], arr[1] - 1, arr[2], arr[3], arr[4]);
+};
+
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState([]);
   const [carregando, setCarregando] = useState(true);
 
-  // 🔥 Carregar notificações do backend
   const carregarNotificacoes = useCallback(async () => {
     try {
       setCarregando(true);
@@ -38,7 +43,6 @@ export default function NotificationsScreen() {
     carregarNotificacoes();
   }, []);
 
-  // 🔵 Marcar como lida
   const marcarComoLida = async (id) => {
     try {
       await notificacaoService.marcarComoLida(id);
@@ -52,7 +56,7 @@ export default function NotificationsScreen() {
   };
 
   const NotificationsItem = ({ item }) => {
-    const safeDate = item.createdAt?.replace(/-/g, "/");
+    const data = parseCreatedAt(item.createdAt);
 
     return (
       <TouchableOpacity
@@ -81,14 +85,14 @@ export default function NotificationsScreen() {
               {item.tipo === "curtida" && "👍 Curtida na sua publicação"}
               {item.tipo === "comentario" && "💬 Novo comentário"}
               {item.tipo === "seguindo" && "👤 Novo seguidor"}
-              {item.tipo === "mensagem" && "📩 Nova mensagem received"}
+              {item.tipo === "mensagem" && "📩 Nova mensagem"}
               {item.tipo === "salvo" && "⭐ Salvou sua publicação"}
             </Text>
           </View>
 
           <Text style={styles.dateText}>
-            {safeDate
-              ? new Date(safeDate).toLocaleTimeString("pt-BR", {
+            {data
+              ? data.toLocaleTimeString("pt-BR", {
                   hour: "2-digit",
                   minute: "2-digit",
                 })

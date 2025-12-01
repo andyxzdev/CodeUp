@@ -15,6 +15,12 @@ import { useAuth } from "../../hooks/useAuth";
 import { publicacaoService } from "../../api/publicacaoService";
 import ModalComentarios from "../../../components/ModalComentarios";
 
+// 🟦 Função para converter createdAt recebido como array
+const parseCreatedAt = (arr) => {
+  if (!arr || !Array.isArray(arr)) return null;
+  return new Date(arr[0], arr[1] - 1, arr[2], arr[3], arr[4]);
+};
+
 export default function HomeScreen({ navigation }) {
   const { usuario } = useAuth();
   const [publicacoes, setPublicacoes] = useState([]);
@@ -50,15 +56,15 @@ export default function HomeScreen({ navigation }) {
     carregarFeed();
   }, []);
 
-  const handleCurtir = async (publicacaoId) => {
+  const handleCurtir = async (id) => {
     try {
-      const response = await publicacaoService.curtirPublicacao(publicacaoId);
+      const response = await publicacaoService.curtir(id);
 
       if (response.sucesso) {
         setPublicacoes((prev) =>
           prev.map((pub) =>
-            pub.id === publicacaoId
-              ? { ...pub, curtidasCount: (pub.curtidasCount || 0) + 1 }
+            pub.id === id
+              ? { ...pub, curtidasCount: pub.curtidasCount + 1 }
               : pub
           )
         );
@@ -68,9 +74,9 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  const handleSalvar = async (publicacaoId) => {
+  const handleSalvar = async (id) => {
     try {
-      const response = await publicacaoService.salvarPublicacao(publicacaoId);
+      const response = await publicacaoService.salvar(id);
 
       if (response.sucesso) {
         Alert.alert("Sucesso", "Publicação salva!");
@@ -87,7 +93,6 @@ export default function HomeScreen({ navigation }) {
 
   const renderPublicacao = ({ item }) => (
     <View style={styles.postContainer}>
-      {/* HEADER */}
       <View style={styles.postHeader}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
@@ -98,20 +103,18 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.userInfo}>
           <Text style={styles.username}>@{item.authorName}</Text>
           <Text style={styles.time}>
-            {new Date(item.createdAt).toLocaleDateString("pt-BR")}
+            {parseCreatedAt(item.createdAt)?.toLocaleDateString("pt-BR") ||
+              "--"}
           </Text>
         </View>
       </View>
 
-      {/* CONTEÚDO */}
       <Text style={styles.postText}>{item.conteudo}</Text>
 
-      {/* IMAGEM (se existir) */}
       {item.imageUrl ? (
         <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
       ) : null}
 
-      {/* AÇÕES */}
       <View style={styles.actions}>
         <TouchableOpacity
           onPress={() => handleCurtir(item.id)}
@@ -150,7 +153,6 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Modal Comentários */}
       {mostrarComentarios && postSelecionado && (
         <ModalComentarios
           publicacaoId={postSelecionado.id}
@@ -158,7 +160,6 @@ export default function HomeScreen({ navigation }) {
         />
       )}
 
-      {/* HEADER */}
       <View style={styles.header}>
         <Image
           source={require("../../../assets/logo/CODE-UP2.png")}
@@ -170,7 +171,6 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* FEED */}
       <FlatList
         data={publicacoes}
         keyExtractor={(item) => item.id.toString()}
@@ -183,7 +183,6 @@ export default function HomeScreen({ navigation }) {
         style={styles.feed}
       />
 
-      {/* FOOTER */}
       <View style={styles.footer}>
         <TouchableOpacity onPress={() => navigation.navigate("Home")}>
           <Ionicons name="home" size={26} color="#007AFF" />
@@ -209,12 +208,8 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-/* ======================= ESTILOS ======================= */
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-
-  /* HEADER */
   header: {
     backgroundColor: "#ffffffff",
     paddingTop: 15,
@@ -225,11 +220,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logo: { width: 65, height: 65 },
-
-  /* FEED */
   feed: { paddingHorizontal: 15, marginTop: 10 },
-
-  /* POST */
   postContainer: {
     backgroundColor: "#fff",
     marginBottom: 20,
@@ -255,17 +246,13 @@ const styles = StyleSheet.create({
   userInfo: { marginLeft: 12 },
   username: { fontSize: 16, fontWeight: "bold", color: "#333" },
   time: { fontSize: 12, color: "#777" },
-
   postText: { fontSize: 15, color: "#333", marginBottom: 12 },
-
   postImage: {
     width: "100%",
     height: 250,
     borderRadius: 12,
     marginBottom: 12,
   },
-
-  /* AÇÕES */
   actions: {
     flexDirection: "row",
     alignItems: "center",
@@ -273,11 +260,7 @@ const styles = StyleSheet.create({
   },
   actionBtn: { flexDirection: "row", alignItems: "center", marginRight: 18 },
   actionLabel: { marginLeft: 6, fontSize: 14, color: "#555" },
-
-  /* LOADING */
   loading: { flex: 1, justifyContent: "center", alignItems: "center" },
-
-  /* FOOTER */
   footer: {
     flexDirection: "row",
     justifyContent: "space-around",

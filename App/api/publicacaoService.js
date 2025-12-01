@@ -2,61 +2,56 @@
 import { api, token as tokenGlobal, BASE_URL } from "./config.js";
 
 export const publicacaoService = {
-  async getFeed(page = 0, size = 10) {
+  async getFeed(page = 0, size = 20) {
     return await api.get(`/publicacoes/feed?page=${page}&size=${size}`);
   },
 
-  async criarPublicacao({ conteudo, imagemUri }) {
+  async criarPublicacao({ conteudo, imagemUri, imagemName, imagemType }) {
     try {
       console.log("📝 Criando nova publicação");
-
-      const token = tokenGlobal;
-      console.log("🔑 Token usado no upload:", token);
-
       const formData = new FormData();
+
       formData.append("conteudo", conteudo);
 
       if (imagemUri) {
-        const filename = imagemUri.split("/").pop();
-        const ext = filename.split(".").pop().toLowerCase();
-
-        const mime =
-          ext === "png"
-            ? "image/png"
-            : ext === "jpg" || ext === "jpeg"
-            ? "image/jpeg"
-            : "image/*";
-
         formData.append("imagem", {
           uri: imagemUri,
-          name: filename,
-          type: mime,
+          name: imagemName || imagemUri.split("/").pop(),
+          type: imagemType || "image/jpeg",
         });
       }
 
-      const response = await fetch(`${BASE_URL}/publicacoes`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      const raw = await response.text();
-      console.log("📥 RAW multipart:", raw);
-
-      return JSON.parse(raw);
+      return await api.post("/publicacoes", formData);
     } catch (err) {
       console.log("❌ Erro ao criar publicação:", err);
       throw err;
     }
   },
 
-  async getPublicacoesUsuario(usuarioId) {
-    return await api.get(`/publicacoes/usuario/${usuarioId}`);
+  // =============== CURTIR ===============
+  async curtir(id) {
+    return await api.post(`/publicacoes/${id}/curtida`, {});
   },
 
-  async getPublicacao(id) {
-    return await api.get(`/publicacoes/${id}`);
+  async descurtir(id) {
+    return await api.delete(`/publicacoes/${id}/curtida`);
+  },
+
+  // =============== SALVAR ===============
+  async salvar(id) {
+    return await api.post(`/publicacoes/${id}/salvar`, {});
+  },
+
+  async removerSalvar(id) {
+    return await api.delete(`/publicacoes/${id}/salvar`);
+  },
+
+  // =============== COMENTÁRIOS ===============
+  async comentar(id, texto) {
+    return await api.postTexto(`/publicacoes/${id}/comentarios`, texto);
+  },
+
+  async listarComentarios(id) {
+    return await api.get(`/publicacoes/${id}/comentarios`);
   },
 };

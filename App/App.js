@@ -6,7 +6,7 @@ import CadastroScreen from "./pages/Login/CadastroScreen";
 import HomeScreen from "./pages/home/HomeScreen";
 import UserProfileScreen from "./pages/profile/UserProfileScreen";
 import MyProfileScreen from "./pages/profile/MyProfileScreen";
-import NotificationsScreen from "./pages/Notifications/NotificationsScreen";
+import NotificationsScreen from "./pages/notifications/NotificationsScreen";
 import ChatScreen from "./pages/Messages/ChatScreen";
 import ConversasScreen from "./pages/Messages/ConversasScreen";
 import NovaMensagemScreen from "./pages/Messages/NovaMensagemScreen";

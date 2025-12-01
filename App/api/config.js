@@ -11,9 +11,18 @@ export const setToken = (newToken) => {
   console.log("🔑 Token atualizado:", token ? "OK" : "VAZIO");
 };
 
-const getHeaders = () => {
-  const headers = { "Content-Type": "application/json" };
+// ===============================================
+// ❗ NÃO definir Content-Type se body for FormData
+// ===============================================
+const getHeaders = (body) => {
+  const headers = {};
+
+  if (!(body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
   if (token) headers["Authorization"] = `Bearer ${token}`;
+
   return headers;
 };
 
@@ -28,46 +37,63 @@ async function parseResponse(response) {
   }
 }
 
+async function get(endpoint) {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    method: "GET",
+    headers: getHeaders(),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return await parseResponse(response);
+}
+
+async function post(endpoint, body) {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    method: "POST",
+    headers: getHeaders(body),
+    body: body instanceof FormData ? body : JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return await parseResponse(response);
+}
+
+async function put(endpoint, body) {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    method: "PUT",
+    headers: getHeaders(body),
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return await parseResponse(response);
+}
+
+async function del(endpoint) {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return await parseResponse(response);
+}
+
+// usado para comentários (texto puro)
+async function postTexto(endpoint, texto) {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain",
+      Authorization: token ? `Bearer ${token}` : undefined,
+    },
+    body: texto,
+  });
+
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return await parseResponse(response);
+}
+
 export const api = {
-  async get(endpoint) {
-    console.log(`📡 GET ${BASE_URL}${endpoint}`);
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      method: "GET",
-      headers: getHeaders(),
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await parseResponse(response);
-  },
-
-  async post(endpoint, body) {
-    console.log(`📡 POST ${BASE_URL}${endpoint}`, body);
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await parseResponse(response);
-  },
-
-  async put(endpoint, body) {
-    console.log(`📡 PUT ${BASE_URL}${endpoint}`, body);
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      method: "PUT",
-      headers: getHeaders(),
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await parseResponse(response);
-  },
-
-  async delete(endpoint) {
-    console.log(`📡 DELETE ${BASE_URL}${endpoint}`);
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      method: "DELETE",
-      headers: getHeaders(),
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await parseResponse(response);
-  },
+  get,
+  post,
+  postTexto,
+  put,
+  delete: del,
 };

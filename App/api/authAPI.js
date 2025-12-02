@@ -1,5 +1,5 @@
-// src/api/authAPI.js
 import { api, setToken } from "./config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const authAPI = {
   async login(email, senha) {
@@ -9,15 +9,17 @@ export const authAPI = {
         senha,
       });
 
-      if (response.token) {
-        setToken(response.token);
-        // Salva no AsyncStorage também
-        await AsyncStorage.setItem("userToken", response.token);
+      // resposta real vem dentro de response.data.dados.token
+      const token = response.data?.dados?.token;
+
+      if (token) {
+        setToken(token);
+        await AsyncStorage.setItem("userToken", token);
       }
 
-      return response;
+      return response.data;
     } catch (error) {
-      console.error("Erro no login:", error);
+      console.error("❌ Erro no login:", error);
       throw error;
     }
   },
@@ -25,9 +27,9 @@ export const authAPI = {
   async cadastrar(usuarioData) {
     try {
       const response = await api.post("/usuarios", usuarioData);
-      return response;
+      return response.data;
     } catch (error) {
-      console.error("Erro no cadastro:", error);
+      console.error("❌ Erro no cadastro:", error);
       throw error;
     }
   },

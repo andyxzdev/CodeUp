@@ -1,7 +1,8 @@
 // api/config.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const BASE_URL = "http://10.0.10.171:8080/api";
+export const BASE_URL = "https://unperuked-camren-weedily.ngrok-free.dev/api";
+//export const BASE_URL = "http://10.0.10.171:8080/api";
 console.log("🔗 API BASE:", BASE_URL);
 
 export let token = null;
@@ -14,15 +15,30 @@ export const setToken = (newToken) => {
 // ===============================================
 // ❗ NÃO definir Content-Type se body for FormData
 // ===============================================
-const getHeaders = (body) => {
-  const headers = {};
 
+//const getHeaders = (body) => {
+// const headers = {};
+
+// if (!(body instanceof FormData)) {
+//    headers["Content-Type"] = "application/json";
+// }
+
+// if (token) headers["Authorization"] = `Bearer ${token}`;
+
+// return headers;
+//};
+
+const getHeaders = (body) => {
+  const headers = {
+    "ngrok-skip-browser-warning": "true",
+  };
+
+  // ❌ NÃO DEFINIR Content-Type se for FormData
   if (!(body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
 
   if (token) headers["Authorization"] = `Bearer ${token}`;
-
   return headers;
 };
 
@@ -46,12 +62,23 @@ async function get(endpoint) {
   return await parseResponse(response);
 }
 
+//async function post(endpoint, body) {
+//const response = await fetch(`${BASE_URL}${endpoint}`, {
+//  method: "POST",
+// headers: getHeaders(body),
+// body: body instanceof FormData ? body : JSON.stringify(body),
+//});
+//if (!response.ok) throw new Error(`HTTP ${response.status}`);
+// return await parseResponse(response);
+//}
+
 async function post(endpoint, body) {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     method: "POST",
     headers: getHeaders(body),
     body: body instanceof FormData ? body : JSON.stringify(body),
   });
+
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return await parseResponse(response);
 }
